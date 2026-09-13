@@ -1,0 +1,751 @@
+/* style.css */
+/* Design grounded in the subject matter: rural services, earth, crops, water. */
+
+:root {
+  --green-dark: #1f3a2e;
+  --gold: #c9a227;
+  --brown: #6b4a3a;
+  --paper: #faf8f3;
+  --text: #20261f;
+  --border: #ddd6c7;
+  --red: #a13a2f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+/* Urdu is written right-to-left - script.js sets dir="rtl" on <html> when Urdu is selected */
+html[dir="rtl"] body {
+  text-align: right;
+}
+
+html[dir="rtl"] .result-row {
+  flex-direction: row-reverse;
+}
+
+/* ---------- Header ---------- */
+
+header {
+  background: var(--green-dark);
+  padding: 20px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+header h1 {
+  margin: 0;
+  color: var(--paper);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: normal;
+  font-size: 24px;
+  letter-spacing: 0.3px;
+}
+
+#langSwitch {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--green-dark);
+  color: var(--paper);
+  font-size: 13px;
+}
+
+/* ---------- Tab navigation ---------- */
+
+#tabNav {
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--green-dark);
+  padding: 0 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: rgba(250, 248, 243, 0.7);
+  padding: 14px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab-btn:hover {
+  color: var(--paper);
+}
+
+.tab-btn.active {
+  color: var(--paper);
+  border-bottom-color: var(--gold);
+}
+
+/* ---------- Connection warning banner ---------- */
+/* Shown only when the backend can't be reached, so failures are never silent */
+
+.connection-warning {
+  display: none;
+  background: var(--red);
+  color: white;
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.connection-warning.visible {
+  display: block;
+}
+
+/* ---------- Main content area ---------- */
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.tab-section {
+  display: none;
+}
+
+.tab-section.active {
+  display: block;
+}
+
+h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: normal;
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.section-desc {
+  color: var(--brown);
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.disclaimer {
+  background: #fdf2f0;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* ---------- Dashboard cards ---------- */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--green-dark);
+  padding: 16px;
+  cursor: pointer;
+}
+
+html[dir="rtl"] .card {
+  border-left: 1px solid var(--border);
+  border-right: 4px solid var(--green-dark);
+}
+
+.card:hover {
+  border-left-color: var(--gold);
+}
+
+html[dir="rtl"] .card:hover {
+  border-right-color: var(--gold);
+}
+
+.card h3 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+}
+
+.card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--brown);
+}
+
+/* ---------- Forms (shared across all modules) ---------- */
+
+form {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid var(--border);
+  padding: 20px;
+}
+
+label {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--brown);
+  margin-top: 12px;
+}
+
+label:first-child {
+  margin-top: 0;
+}
+
+input, select, textarea {
+  padding: 9px 10px;
+  margin-top: 5px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--paper);
+  width: 100%;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  margin-top: 18px;
+  padding: 11px;
+  background: var(--green-dark);
+  color: var(--paper);
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #142720;
+}
+
+#waterRefreshBtn {
+  padding: 11px 20px;
+  background: var(--green-dark);
+  color: var(--paper);
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#waterRefreshBtn:hover {
+  background: #142720;
+}
+
+/* ---------- Result boxes ---------- */
+
+.result-box {
+  margin-top: 18px;
+  padding: 16px;
+  background: white;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  display: none;
+}
+
+.result-box.visible {
+  display: block;
+}
+
+.result-box.success { border-left: 4px solid var(--green-dark); }
+.result-box.warning { border-left: 4px solid var(--gold); }
+.result-box.error   { border-left: 4px solid var(--red); }
+.result-box.urgent  { border-left: 4px solid var(--red); background: #fdf2f0; } /* stands out from normal results */
+
+html[dir="rtl"] .result-box.success,
+html[dir="rtl"] .result-box.warning,
+html[dir="rtl"] .result-box.error,
+html[dir="rtl"] .result-box.urgent {
+  border-left: none;
+  border-right: 4px solid var(--green-dark);
+}
+
+.result-box h4 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+}
+
+.result-box ul {
+  margin: 6px 0 0 0;
+  padding-left: 18px;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-row:last-child {
+  border-bottom: none;
+}
+
+/* ---------- Chat window (Assistant tab) ---------- */
+
+.chat-window {
+  background: white;
+  border: 1px solid var(--border);
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.chat-message {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  max-width: 80%;
+  font-size: 14px;
+}
+
+.chat-message.user {
+  background: var(--green-dark);
+  color: var(--paper);
+  margin-left: auto; /* pushes the user's messages to the right */
+}
+
+.chat-message.assistant {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  margin-right: auto;
+}
+
+#chatForm {
+  flex-direction: row;
+  gap: 10px;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+#chatForm input {
+  margin-top: 0;
+}
+
+#chatForm button {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+/* ---------- Employment: role choice, auth boxes, dashboards ---------- */
+
+.emp-role-choice {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.role-card {
+  flex: 1;
+  min-width: 200px;
+  margin-top: 0;
+  padding: 28px 20px;
+  background: white;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--green-dark);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.role-card:hover {
+  border-left-color: var(--gold);
+  border-left-width: 6px;
+}
+
+.role-card-icon {
+  font-size: 36px;
+}
+
+.role-card-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+}
+
+.role-card-desc {
+  font-size: 13px;
+  color: var(--brown);
+}
+
+.auth-box, .dashboard-box, #empRoleChoice {
+  display: none; /* toggled by script.js - only one employment view is visible at a time */
+}
+
+.auth-box.active, .dashboard-box.active, #empRoleChoice.active {
+  display: block;
+}
+
+.auth-tabs {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  margin-top: 0;
+  background: white;
+  color: var(--brown);
+  border: 1px solid var(--border);
+  padding: 10px;
+  cursor: pointer;
+}
+
+.auth-tab-btn.active {
+  background: var(--green-dark);
+  color: var(--paper);
+  border-color: var(--green-dark);
+}
+
+.auth-form {
+  display: none;
+}
+
+.auth-form.active {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid var(--border);
+  padding: 20px;
+}
+
+.back-btn {
+  margin-top: 12px;
+  background: none;
+  border: none;
+  color: var(--brown);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: white;
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.dashboard-header button {
+  margin-top: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.dashboard-box h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: normal;
+  font-size: 17px;
+  margin: 24px 0 10px 0;
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.job-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--green-dark);
+  padding: 14px;
+}
+
+.job-card .job-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.job-card .job-card-header h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.job-card p {
+  margin: 6px 0 0 0;
+  font-size: 13px;
+  color: var(--brown);
+}
+
+.job-card button {
+  margin-top: 0;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+/* Small icon-labelled details (location, type, skills, posted date) - replaces
+   plain paragraphs with a tidier row of chips, an easy visual win. */
+.job-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 8px;
+}
+
+.job-card-meta span {
+  font-size: 12px;
+  color: var(--brown);
+}
+
+/* Secondary (outline) and danger (red) button variants, so Delete/Withdraw don't
+   look identical to the primary action on the same card. */
+.btn-secondary {
+  background: white !important;
+  color: var(--green-dark) !important;
+  border: 1px solid var(--green-dark) !important;
+}
+
+.btn-secondary:hover {
+  background: var(--paper) !important;
+}
+
+.btn-danger {
+  background: white !important;
+  color: var(--red) !important;
+  border: 1px solid var(--red) !important;
+}
+
+.btn-danger:hover {
+  background: #fdf2f0 !important;
+}
+
+/* ---------- Stats bar (summary numbers at the top of a dashboard) ---------- */
+
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: white;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold);
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-box .stat-number {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  color: var(--green-dark);
+  display: block;
+}
+
+.stat-box .stat-label {
+  font-size: 12px;
+  color: var(--brown);
+}
+
+.status-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 3px; /* the only rounded-corner exception - a status pill reads clearly this way */
+}
+
+.status-tag.Applied  { background: #f4ecd8; color: var(--brown); }
+.status-tag.Contacted { background: #e3edf7; color: #2a5a8a; }
+.status-tag.Hired     { background: #e3f0e6; color: var(--green-dark); }
+
+.applicant-list {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: none;
+}
+
+.applicant-list.visible {
+  display: block;
+}
+
+.applicant-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.applicant-row:last-child {
+  border-bottom: none;
+}
+
+.applicant-row select {
+  margin-top: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  width: auto;
+}
+
+/* ---------- Admin panel rows ---------- */
+/* Compact, table-like rows - the admin list can get long, so this stays denser
+   than the regular job-card style used elsewhere. */
+
+.admin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: white;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brown);
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.admin-row .admin-row-details strong {
+  display: block;
+  font-size: 14px;
+}
+
+.admin-row .admin-row-details span {
+  color: var(--brown);
+  font-size: 12px;
+}
+
+.admin-row button {
+  margin-top: 0;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+/* ---------- Floating Assistant Widget ---------- */
+/* Fixed bottom-right bubble + panel, same pattern as Intercom/WhatsApp-style
+   chat widgets - stays visible and accessible on every tab. */
+
+#chatBubble {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;         /* the one deliberate circle in this design - a chat bubble reads as one everywhere */
+  background: var(--green-dark);
+  color: var(--paper);
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+}
+
+#chatBubble:hover {
+  background: #142720;
+}
+
+html[dir="rtl"] #chatBubble {
+  right: auto;
+  left: 24px;
+}
+
+#chatPanel {
+  display: none;              /* toggled open/closed by script.js */
+  position: fixed;
+  bottom: 90px;
+  right: 24px;
+  width: 320px;
+  max-width: calc(100vw - 48px);
+  background: white;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  flex-direction: column;
+}
+
+#chatPanel.open {
+  display: flex;
+}
+
+html[dir="rtl"] #chatPanel {
+  right: auto;
+  left: 24px;
+}
+
+#chatPanelHeader {
+  background: var(--green-dark);
+  color: var(--paper);
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+#chatCloseBtn {
+  background: none;
+  border: none;
+  color: var(--paper);
+  cursor: pointer;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+#chatPanel .chat-window {
+  border: none;
+  max-height: 280px;
+  min-height: 150px;
+}
+
+#chatPanel form {
+  border: none;
+  border-top: 1px solid var(--border);
+  padding: 10px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 480px) {
+  header, main {
+    padding: 16px;
+  }
+
+  #tabNav {
+    padding: 0 8px;
+  }
+
+  .tab-btn {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+}

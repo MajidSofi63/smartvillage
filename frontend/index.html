@@ -1,0 +1,393 @@
+<!-- index.html -->
+<!-- Single-page frontend for the AI Smart Village Platform.
+     Tabs switch visibility via script.js. Text is translated live via translations.js
+     using data-i18n attributes - every element that should change language has one. -->
+
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Smart Village Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top header: platform name + language switcher -->
+  <header>
+    <h1 data-i18n="appTitle">🌾 AI Smart Village Platform</h1>
+    <select id="langSwitch">
+      <option value="en">English</option>
+      <option value="hi">हिंदी</option>
+      <option value="ur">اردو</option>
+    </select>
+  </header>
+
+  <!-- Tab buttons -->
+  <nav id="tabNav">
+    <button class="tab-btn active" data-tab="dashboard" data-i18n="navDashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="crop" data-i18n="navCrop">Crop Prediction</button>
+    <button class="tab-btn" data-tab="telemedicine" data-i18n="navTele">Telemedicine</button>
+    <button class="tab-btn" data-tab="schemes" data-i18n="navSchemes">Govt. Schemes</button>
+    <button class="tab-btn" data-tab="water" data-i18n="navWater">Water Management</button>
+    <button class="tab-btn" data-tab="disaster" data-i18n="navDisaster">Disaster Alerts</button>
+    <button class="tab-btn" data-tab="employment" data-i18n="navEmployment">Employment</button>
+    <button class="tab-btn" data-tab="admin" data-i18n="navAdmin">Admin</button>
+  </nav>
+
+  <!-- Shown only if the backend can't be reached - stops silent, confusing failures -->
+  <div id="connectionWarning" class="connection-warning"></div>
+
+  <main>
+
+    <!-- ================= DASHBOARD TAB ================= -->
+    <section id="dashboard" class="tab-section active">
+      <h2 data-i18n="dashHeading">Welcome</h2>
+      <p data-i18n="dashIntro">
+        A single platform that brings together crop prediction, telemedicine, government
+        scheme discovery, water management, disaster alerts, and employment matching.
+      </p>
+
+      <div class="card-grid">
+        <div class="card" data-goto="crop">
+          <h3 data-i18n="cardCropTitle">🌱 Crop Prediction</h3>
+          <p data-i18n="cardCropDesc">Estimate crop yield from rainfall, pesticide use, and temperature.</p>
+        </div>
+        <div class="card" data-goto="telemedicine">
+          <h3 data-i18n="cardTeleTitle">🩺 Telemedicine</h3>
+          <p data-i18n="cardTeleDesc">Describe your symptoms and get first-aid guidance.</p>
+        </div>
+        <div class="card" data-goto="schemes">
+          <h3 data-i18n="cardSchemesTitle">🏛️ Govt. Schemes</h3>
+          <p data-i18n="cardSchemesDesc">Find welfare schemes you're eligible for.</p>
+        </div>
+        <div class="card" data-goto="water">
+          <h3 data-i18n="cardWaterTitle">💧 Water Management</h3>
+          <p data-i18n="cardWaterDesc">Check soil moisture and reservoir levels.</p>
+        </div>
+        <div class="card" data-goto="disaster">
+          <h3 data-i18n="cardDisasterTitle">⛈️ Disaster Alerts</h3>
+          <p data-i18n="cardDisasterDesc">Live weather-based warnings for your area.</p>
+        </div>
+        <div class="card" data-goto="employment">
+          <h3 data-i18n="cardEmploymentTitle">💼 Employment</h3>
+          <p data-i18n="cardEmploymentDesc">Find local jobs that match your skills.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CROP PREDICTION TAB ================= -->
+    <section id="crop" class="tab-section">
+      <h2 data-i18n="cropHeading">Crop Yield Prediction</h2>
+      <p class="section-desc" data-i18n="cropDesc">Predicts upcoming yield based on current conditions.</p>
+
+      <form id="cropForm">
+        <label for="area" data-i18n="labelArea">Country/Area (type to search)</label>
+        <!-- input + datalist = user can TYPE to search instead of scrolling a long dropdown -->
+        <input type="text" id="area" list="areaOptions" autocomplete="off" required>
+        <datalist id="areaOptions"></datalist>
+
+        <label for="cropType" data-i18n="labelCrop">Crop</label>
+        <input type="text" id="cropType" list="cropOptions" autocomplete="off" required>
+        <datalist id="cropOptions"></datalist>
+
+        <label for="rainfall" data-i18n="labelRainfall">Average Rainfall (mm/year)</label>
+        <input type="number" id="rainfall" step="0.1" placeholder="e.g. 1200" required>
+
+        <label for="pesticides" data-i18n="labelPesticides">Pesticides Used (tonnes)</label>
+        <input type="number" id="pesticides" step="0.1" placeholder="e.g. 50" required>
+
+        <label for="temperature" data-i18n="labelTemperature">Average Temperature (°C)</label>
+        <input type="number" id="temperature" step="0.1" placeholder="e.g. 25" required>
+
+        <button type="submit" data-i18n="btnPredict">Predict Yield</button>
+      </form>
+
+      <div id="cropResult" class="result-box"></div>
+    </section>
+
+    <!-- ================= TELEMEDICINE TAB ================= -->
+    <section id="telemedicine" class="tab-section">
+      <h2 data-i18n="teleHeading">Telemedicine Assistant</h2>
+      <p class="section-desc" data-i18n="teleDesc">Describe your symptoms in plain words.</p>
+      <p class="disclaimer" data-i18n="teleDisclaimer">⚠️ This tool does NOT diagnose you. Always see a doctor.</p>
+
+      <form id="telemedicineForm">
+        <label for="symptoms" data-i18n="labelSymptoms">Your Symptoms</label>
+        <textarea id="symptoms" rows="3" placeholder="e.g. chest pain, leg pain, fever" required></textarea>
+
+        <button type="submit" data-i18n="btnCheckSymptoms">Check Symptoms</button>
+      </form>
+
+      <div id="telemedicineResult" class="result-box"></div>
+    </section>
+
+    <!-- ================= GOVT SCHEMES TAB ================= -->
+    <section id="schemes" class="tab-section">
+      <h2 data-i18n="schemesHeading">Government Scheme Finder</h2>
+      <p class="section-desc" data-i18n="schemesDesc">Enter your details to see which schemes you qualify for.</p>
+
+      <form id="schemesForm">
+        <label for="age" data-i18n="labelAge">Your Age</label>
+        <input type="number" id="age" placeholder="e.g. 35" required>
+
+        <label for="income" data-i18n="labelIncome">Annual Household Income (₹)</label>
+        <input type="number" id="income" placeholder="e.g. 150000" required>
+
+        <label for="land" data-i18n="labelLand">Do you own agricultural land?</label>
+        <select id="land" required>
+          <option value="true" data-i18n="optYes">Yes</option>
+          <option value="false" data-i18n="optNo">No</option>
+        </select>
+
+        <label for="category" data-i18n="labelCategory">Category</label>
+        <select id="category" required>
+          <option value="General">General</option>
+          <option value="OBC">OBC</option>
+          <option value="SC">SC</option>
+          <option value="ST">ST</option>
+          <option value="EWS">EWS</option>
+        </select>
+
+        <button type="submit" data-i18n="btnFindSchemes">Find Eligible Schemes</button>
+      </form>
+
+      <div id="schemesResult" class="result-box"></div>
+    </section>
+
+    <!-- ================= WATER MANAGEMENT TAB ================= -->
+    <section id="water" class="tab-section">
+      <h2 data-i18n="waterHeading">Smart Water Management</h2>
+      <p class="section-desc" data-i18n="waterDesc">Real soil moisture and rainfall data for your area, via Open-Meteo.</p>
+
+      <form id="waterForm">
+        <label for="waterCity" data-i18n="labelCity">Your City/Town</label>
+        <input type="text" id="waterCity" placeholder="e.g. Baramulla" required>
+
+        <button type="submit" data-i18n="btnWaterRefresh">Check Water Status</button>
+      </form>
+
+      <div id="waterResult" class="result-box"></div>
+    </section>
+
+    <!-- ================= DISASTER ALERTS TAB ================= -->
+    <section id="disaster" class="tab-section">
+      <h2 data-i18n="disasterHeading">Disaster Alert System</h2>
+      <p class="section-desc" data-i18n="disasterDesc">Live weather, forecast, and air quality via OpenWeather.</p>
+
+      <form id="disasterForm">
+        <label for="city" data-i18n="labelCity">Your City/Town</label>
+        <input type="text" id="city" placeholder="e.g. Srinagar" required>
+
+        <button type="submit" data-i18n="btnCheckWeather">Check Weather Alerts</button>
+      </form>
+
+      <div id="disasterResult" class="result-box"></div>
+    </section>
+
+    <!-- ================= EMPLOYMENT TAB ================= -->
+    <section id="employment" class="tab-section">
+      <h2 data-i18n="employmentHeading">Employment Matching</h2>
+      <p class="section-desc" data-i18n="employmentDesc">A real job board: log in as a worker or an employer.</p>
+
+      <!-- View 1: choose a role (shown when nobody is logged in) -->
+      <div id="empRoleChoice">
+        <div id="platformStatsBar" class="stats-bar"></div>
+
+        <div class="emp-role-choice">
+          <button id="chooseWorkerBtn" class="role-card">
+            <span class="role-card-icon">🧑‍🌾</span>
+            <span class="role-card-title" data-i18n="iAmWorker">I'm Looking for Work</span>
+            <span class="role-card-desc" data-i18n="iAmWorkerDesc">Register your skills and apply to local jobs</span>
+          </button>
+          <button id="chooseEmployerBtn" class="role-card">
+            <span class="role-card-icon">🏢</span>
+            <span class="role-card-title" data-i18n="iAmEmployer">I'm Hiring</span>
+            <span class="role-card-desc" data-i18n="iAmEmployerDesc">Post an opening and find local workers</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- View 2a: worker login/register -->
+      <div id="workerAuthBox" class="auth-box">
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" data-authtab="workerLoginForm" data-i18n="btnLogin">Login</button>
+          <button class="auth-tab-btn" data-authtab="workerRegisterForm" data-i18n="btnRegister">Register</button>
+        </div>
+
+        <form id="workerLoginForm" class="auth-form active">
+          <label data-i18n="labelEmail">Email</label>
+          <input type="email" id="workerLoginEmail" required>
+          <label data-i18n="labelPassword">Password</label>
+          <input type="password" id="workerLoginPassword" required>
+          <button type="submit" data-i18n="btnLogin">Login</button>
+        </form>
+
+        <form id="workerRegisterForm" class="auth-form">
+          <label data-i18n="labelName">Your Name</label>
+          <input type="text" id="workerRegName" required>
+          <label data-i18n="labelEmail">Email</label>
+          <input type="email" id="workerRegEmail" required>
+          <label data-i18n="labelPhone">Phone Number (for employers to contact you)</label>
+          <input type="text" id="workerRegPhone" required>
+          <label data-i18n="labelLocation">Your Village/Town</label>
+          <input type="text" id="workerRegLocation" required>
+          <label data-i18n="labelSkills">Your Skills</label>
+          <textarea id="workerRegSkills" rows="2" placeholder="e.g. farming, driving, tailoring" required></textarea>
+          <label data-i18n="labelPassword">Create a Password</label>
+          <input type="password" id="workerRegPassword" required>
+          <button type="submit" data-i18n="btnRegister">Register</button>
+        </form>
+
+        <div id="workerAuthResult" class="result-box"></div>
+        <button class="back-btn" data-backto="empRoleChoice" data-i18n="btnBack">← Back</button>
+      </div>
+
+      <!-- View 2b: employer login/register -->
+      <div id="employerAuthBox" class="auth-box">
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" data-authtab="employerLoginForm" data-i18n="btnLogin">Login</button>
+          <button class="auth-tab-btn" data-authtab="employerRegisterForm" data-i18n="btnRegister">Register</button>
+        </div>
+
+        <form id="employerLoginForm" class="auth-form active">
+          <label data-i18n="labelEmail">Email</label>
+          <input type="email" id="employerLoginEmail" required>
+          <label data-i18n="labelPassword">Password</label>
+          <input type="password" id="employerLoginPassword" required>
+          <button type="submit" data-i18n="btnLogin">Login</button>
+        </form>
+
+        <form id="employerRegisterForm" class="auth-form">
+          <label data-i18n="labelName">Your Name / Business Name</label>
+          <input type="text" id="employerRegName" required>
+          <label data-i18n="labelEmail">Email</label>
+          <input type="email" id="employerRegEmail" required>
+          <label data-i18n="labelPassword">Create a Password</label>
+          <input type="password" id="employerRegPassword" required>
+          <button type="submit" data-i18n="btnRegister">Register</button>
+        </form>
+
+        <div id="employerAuthResult" class="result-box"></div>
+        <button class="back-btn" data-backto="empRoleChoice" data-i18n="btnBack">← Back</button>
+      </div>
+
+      <!-- View 3a: worker dashboard -->
+      <div id="workerDashboard" class="dashboard-box">
+        <div class="dashboard-header">
+          <span data-i18n="welcomeText">Welcome,</span> <strong id="workerDashName"></strong>
+          <button id="workerLogoutBtn" data-i18n="btnLogout">Logout</button>
+        </div>
+
+        <div id="workerStatsBar" class="stats-bar"></div>
+
+        <h3 data-i18n="availableJobsTitle">Available Jobs</h3>
+        <div id="jobsList" class="card-list"></div>
+
+        <h3 data-i18n="myApplicationsTitle">My Applications</h3>
+        <div id="myApplicationsList" class="card-list"></div>
+      </div>
+
+      <!-- View 3b: employer dashboard -->
+      <div id="employerDashboard" class="dashboard-box">
+        <div class="dashboard-header">
+          <span data-i18n="welcomeText">Welcome,</span> <strong id="employerDashName"></strong>
+          <button id="employerLogoutBtn" data-i18n="btnLogout">Logout</button>
+        </div>
+
+        <div id="employerStatsBar" class="stats-bar"></div>
+
+        <h3 data-i18n="postJobTitle">Post a New Job</h3>
+        <form id="jobPostForm">
+          <label data-i18n="labelJobTitle">Job Title</label>
+          <input type="text" id="jobTitle" required>
+
+          <label data-i18n="labelRequiredSkills">Required Skills</label>
+          <textarea id="jobSkills" rows="2" placeholder="e.g. masonry, construction" required></textarea>
+
+          <label data-i18n="labelLocation">Location</label>
+          <input type="text" id="jobLocation" required>
+
+          <label data-i18n="labelJobType">Type</label>
+          <select id="jobType">
+            <option value="Full-Time">Full-Time</option>
+            <option value="Daily Wage">Daily Wage</option>
+            <option value="Seasonal">Seasonal</option>
+            <option value="Self-Employed">Self-Employed</option>
+          </select>
+
+          <label data-i18n="labelContact">Contact Info</label>
+          <input type="text" id="jobContact" placeholder="phone number" required>
+
+          <button type="submit" data-i18n="btnPostJob">Post Job</button>
+        </form>
+        <div id="jobPostResult" class="result-box"></div>
+
+        <h3 data-i18n="myJobsTitle">My Posted Jobs</h3>
+        <div id="myJobsList" class="card-list"></div>
+      </div>
+    </section>
+
+    <!-- ================= ADMIN TAB ================= -->
+    <section id="admin" class="tab-section">
+      <h2 data-i18n="adminHeading">Admin Panel</h2>
+      <p class="section-desc" data-i18n="adminDesc">Full visibility into everyone using the platform.</p>
+
+      <!-- Password gate -->
+      <form id="adminLoginForm" class="auth-form active">
+        <label data-i18n="labelAdminPassword">Admin Password</label>
+        <input type="password" id="adminPasswordInput" required>
+        <button type="submit" data-i18n="btnLogin">Login</button>
+      </form>
+      <div id="adminAuthResult" class="result-box"></div>
+
+      <!-- Dashboard, hidden until the password is verified -->
+      <div id="adminDashboard" class="dashboard-box">
+        <div class="dashboard-header">
+          <span data-i18n="adminHeading">Admin Panel</span>
+          <button id="adminLogoutBtn" data-i18n="btnLogout">Logout</button>
+        </div>
+
+        <div id="adminStatsBar" class="stats-bar"></div>
+
+        <h3 data-i18n="adminWorkersTitle">Registered Workers</h3>
+        <div id="adminWorkersList" class="card-list"></div>
+
+        <h3 data-i18n="adminEmployersTitle">Registered Employers</h3>
+        <div id="adminEmployersList" class="card-list"></div>
+
+        <h3 data-i18n="adminJobsTitle">All Job Postings</h3>
+        <div id="adminJobsList" class="card-list"></div>
+
+        <h3 data-i18n="adminApplicationsTitle">All Applications</h3>
+        <div id="adminApplicationsList" class="card-list"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FLOATING ASSISTANT WIDGET ================= -->
+  <!-- Sits outside <main> and outside the tab system, fixed to the bottom-right
+       corner, visible on every tab - the standard chat-bubble pattern most apps use. -->
+
+  <button id="chatBubble" aria-label="Open assistant">💬</button>
+
+  <div id="chatPanel">
+    <div id="chatPanelHeader">
+      <span data-i18n="assistantHeading">Ask the Assistant</span>
+      <button id="chatCloseBtn" aria-label="Close assistant">✕</button>
+    </div>
+
+    <div id="chatWindow" class="chat-window"></div>
+
+    <form id="chatForm">
+      <input type="text" id="chatInput" data-i18n-placeholder="assistantPlaceholder"
+             placeholder="e.g. How do I check if I'm eligible for a scheme?" required>
+      <button type="submit" data-i18n="btnSend">Send</button>
+    </form>
+  </div>
+
+  <script src="translations.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

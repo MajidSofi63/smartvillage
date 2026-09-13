@@ -1,0 +1,29 @@
+# render.yaml
+# A "Blueprint" - lets Render read this one file and set up both the backend and
+# frontend automatically, instead of configuring each service by hand in the dashboard.
+# On Render: New -> Blueprint -> select this repo -> Render finds this file.
+
+services:
+  # The FastAPI backend
+  - type: web
+    name: smart-village-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # sync: false means Render will ask you to paste the real value in its
+      # dashboard instead of storing it in this file (which gets committed to git)
+      - key: DATABASE_URL
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # The plain HTML/CSS/JS frontend
+  - type: web
+    name: smart-village-frontend
+    runtime: static
+    rootDir: frontend
+    staticPublishPath: .

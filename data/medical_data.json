@@ -1,0 +1,88 @@
+[
+  {"condition": "Common Cold", "symptoms": ["cough", "sneezing", "runny nose", "sore throat", "mild fever"], "urgent": false,
+   "advice": "Rest, drink warm fluids, and use steam inhalation. Usually resolves in 5-7 days."},
+
+  {"condition": "Flu (Influenza)", "symptoms": ["fever", "body ache", "chills", "fatigue"], "urgent": false,
+   "advice": "Rest, stay hydrated, and take paracetamol for fever. See a doctor if fever crosses 103°F."},
+
+  {"condition": "Food Poisoning", "symptoms": ["vomiting", "diarrhea", "stomach pain", "nausea"], "urgent": false,
+   "advice": "Drink ORS frequently and avoid solid food for a few hours. See a doctor if it lasts more than 24 hours."},
+
+  {"condition": "Dehydration", "symptoms": ["dizziness", "dry mouth", "dark urine"], "urgent": false,
+   "advice": "Drink water and ORS immediately, rest in a cool place. Seek help if confusion or fainting occurs."},
+
+  {"condition": "Migraine", "symptoms": ["headache", "sensitivity to light", "blurred vision"], "urgent": false,
+   "advice": "Rest in a dark, quiet room and stay hydrated. See a doctor if headaches become frequent."},
+
+  {"condition": "Skin Infection", "symptoms": ["itching", "redness", "rash", "skin pain"], "urgent": false,
+   "advice": "Keep the area clean and dry, avoid scratching. See a doctor if pus or spreading redness appears."},
+
+  {"condition": "Possible Heart Attack", "symptoms": ["chest pain", "heart pain", "chest tightness", "pain in left arm", "shortness of breath"], "urgent": true,
+   "advice": "These symptoms can indicate a heart attack. Go to the nearest hospital or call emergency services immediately. Do not wait."},
+
+  {"condition": "Leg Pain / Muscle Strain", "symptoms": ["leg pain", "calf pain", "muscle cramp", "swollen leg"], "urgent": false,
+   "advice": "Rest the leg, apply a cold compress, and elevate it. See a doctor if swelling is sudden or one leg is more swollen than the other (possible clot)."},
+
+  {"condition": "Back Pain", "symptoms": ["back pain", "lower back pain", "stiff back"], "urgent": false,
+   "advice": "Rest on a firm surface, avoid heavy lifting, apply a warm compress. See a doctor if pain spreads down the leg or you lose bladder control."},
+
+  {"condition": "Joint Pain / Arthritis", "symptoms": ["joint pain", "knee pain", "swollen joints", "stiffness"], "urgent": false,
+   "advice": "Rest the joint, use a warm compress, and avoid overexertion. See a doctor if a joint is hot, red, or you have a fever alongside."},
+
+  {"condition": "Ear Infection", "symptoms": ["ear pain", "ear discharge", "hearing loss", "ear ringing"], "urgent": false,
+   "advice": "Avoid inserting anything into the ear. Keep it dry. See a doctor for proper examination and antibiotics if needed."},
+
+  {"condition": "Eye Irritation / Conjunctivitis", "symptoms": ["eye redness", "eye itching", "eye discharge", "watery eyes"], "urgent": false,
+   "advice": "Avoid touching or rubbing the eyes, wash hands often. See a doctor if vision is affected or pain is severe."},
+
+  {"condition": "Toothache", "symptoms": ["tooth pain", "toothache", "gum swelling", "sensitive teeth"], "urgent": false,
+   "advice": "Rinse with warm salt water, avoid very hot/cold food. See a dentist as soon as possible to prevent infection spreading."},
+
+  {"condition": "Urinary Tract Infection", "symptoms": ["burning urination", "frequent urination", "lower abdomen pain"], "urgent": false,
+   "advice": "Drink plenty of water. See a doctor for antibiotics - untreated UTIs can spread to the kidneys."},
+
+  {"condition": "Anemia (Weakness)", "symptoms": ["weakness", "fatigue", "pale skin", "shortness of breath on exertion"], "urgent": false,
+   "advice": "May indicate low iron. Eat iron-rich food (leafy greens, jaggery). See a doctor for a blood test."},
+
+  {"condition": "Asthma / Breathing Difficulty", "symptoms": ["difficulty breathing", "wheezing", "chest tightness", "shortness of breath"], "urgent": true,
+   "advice": "If breathing is severely difficult or lips/fingertips turn blue, this is an emergency - seek urgent medical care immediately."},
+
+  {"condition": "Allergic Reaction", "symptoms": ["skin swelling", "hives", "itchy skin", "swollen lips", "swollen face"], "urgent": true,
+   "advice": "If there is swelling of the face/throat or difficulty breathing, this can be life-threatening - go to a hospital immediately."},
+
+  {"condition": "Insect or Animal Bite", "symptoms": ["insect bite", "snake bite", "dog bite", "bite wound"], "urgent": true,
+   "advice": "For snake bites: keep the person still, keep the bite below heart level, and get to a hospital immediately - do not cut or suck the wound."},
+
+  {"condition": "Burns", "symptoms": ["burn", "skin burn", "burnt skin"], "urgent": false,
+   "advice": "Cool the burn under running water for 10-20 minutes. Do not apply ice, toothpaste, or oil. See a doctor for large or deep burns."},
+
+  {"condition": "Cuts and Wounds", "symptoms": ["cut", "wound", "bleeding"], "urgent": false,
+   "advice": "Clean the wound and apply firm pressure to stop bleeding. See a doctor if bleeding doesn't stop or the cut is deep."},
+
+  {"condition": "High Blood Pressure Symptoms", "symptoms": ["severe headache", "nosebleed", "chest pain", "blurred vision", "high blood pressure"], "urgent": true,
+   "advice": "These can indicate dangerously high blood pressure. Seek medical attention promptly, especially if headache is sudden and severe."},
+
+  {"condition": "Possible Diabetes Symptoms", "symptoms": ["excessive thirst", "frequent urination", "unexplained weight loss", "blurred vision"], "urgent": false,
+   "advice": "These may indicate diabetes. Get a blood sugar test done at your nearest health centre."},
+
+  {"condition": "Possible Typhoid", "symptoms": ["prolonged fever", "stomach pain", "weakness", "loss of appetite"], "urgent": false,
+   "advice": "Fever lasting more than 3-4 days with these symptoms needs a blood test. Visit a health centre for typhoid testing."},
+
+  {"condition": "Possible Jaundice", "symptoms": ["yellow skin", "yellow eyes", "dark urine", "fatigue", "loss of appetite"], "urgent": false,
+   "advice": "Yellowing of skin/eyes needs medical evaluation of the liver. See a doctor for a blood test soon."},
+
+  {"condition": "Possible Dengue", "symptoms": ["high fever", "severe headache", "joint pain", "rash", "eye pain"], "urgent": true,
+   "advice": "High fever with joint pain and rash needs urgent testing, especially in mosquito-prone areas. Go to a health centre promptly."},
+
+  {"condition": "Possible Malaria", "symptoms": ["high fever", "chills", "sweating", "vomiting"], "urgent": true,
+   "advice": "Common in rural areas. Go to the nearest health centre for a blood test as soon as possible."},
+
+  {"condition": "Anxiety / Panic Symptoms", "symptoms": ["racing heart", "sweating", "trouble breathing", "restlessness", "panic"], "urgent": false,
+   "advice": "Try slow, deep breathing and sit somewhere calm. If chest pain or breathlessness is severe, treat it as urgent and seek care."},
+
+  {"condition": "Sleep Problems", "symptoms": ["insomnia", "trouble sleeping", "tiredness"], "urgent": false,
+   "advice": "Keep a regular sleep schedule, avoid caffeine late in the day. See a doctor if this continues for more than 2 weeks."},
+
+  {"condition": "General Fatigue", "symptoms": ["tiredness", "low energy", "weakness"], "urgent": false,
+   "advice": "Could be due to poor sleep, diet, or an underlying condition. If it persists for over 2 weeks, get a general checkup."}
+]

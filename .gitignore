@@ -1,0 +1,12 @@
+# Never commit real secrets
+.env
+
+# Python bytecode/cache
+__pycache__/
+*.pyc
+
+# Old local SQLite file, if one still exists from before the Postgres switch
+backend/smart_village.db
+
+# OS/editor clutter
+.DS_Store

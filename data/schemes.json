@@ -1,0 +1,72 @@
+[
+  {
+    "name": "PM-KISAN (Farmer Income Support)",
+    "min_age": 18, "max_age": 100, "max_annual_income": 200000, "requires_land": true,
+    "categories": ["General", "OBC", "SC", "ST", "EWS"],
+    "description": "Provides direct income support of Rs. 6000/year to landholding farmer families.",
+    "steps": "Apply online at pmkisan.gov.in with land records and Aadhaar card."
+  },
+  {
+    "name": "Pradhan Mantri Awas Yojana - Gramin",
+    "min_age": 18, "max_age": 100, "max_annual_income": 300000, "requires_land": false,
+    "categories": ["General", "OBC", "SC", "ST", "EWS"],
+    "description": "Financial assistance for building a house for rural families without a pucca house.",
+    "steps": "Apply through your local Gram Panchayat office with income and residence proof."
+  },
+  {
+    "name": "National Old Age Pension Scheme",
+    "min_age": 60, "max_age": 120, "max_annual_income": 150000, "requires_land": false,
+    "categories": ["General", "OBC", "SC", "ST", "EWS"],
+    "description": "Monthly pension support for elderly citizens below the poverty line.",
+    "steps": "Apply at the local Social Welfare Department with age and income proof."
+  },
+  {
+    "name": "PM Fasal Bima Yojana (Crop Insurance)",
+    "min_age": 18, "max_age": 100, "max_annual_income": 1000000, "requires_land": true,
+    "categories": ["General", "OBC", "SC", "ST", "EWS"],
+    "description": "Insurance cover for crop loss due to natural calamities, pests, or disease.",
+    "steps": "Apply through your bank or Common Service Centre before the crop season deadline."
+  },
+  {
+    "name": "MGNREGA (Rural Employment Guarantee)",
+    "min_age": 18, "max_age": 100, "max_annual_income": 250000, "requires_land": false,
+    "categories": ["General", "OBC", "SC", "ST", "EWS"],
+    "description": "Guarantees 100 days of paid unskilled manual work per year to rural households.",
+    "steps": "Register for a Job Card at your Gram Panchayat office."
+  },
+  {
+    "name": "Sukanya Samriddhi Yojana",
+    "min_age": 0, "max_age": 10, "max_annual_income": 1000000, "requires_land": false,
+    "categories": ["General", "OBC", "SC", "ST", "EWS"],
+    "description": "Savings scheme for the welfare of the girl child, offering high interest returns.",
+    "steps": "Open an account at a post office or authorised bank with the girl child's birth certificate."
+  },
+  {
+    "name": "Post-Matric Scholarship for OBC Students",
+    "min_age": 15, "max_age": 30, "max_annual_income": 250000, "requires_land": false,
+    "categories": ["OBC"],
+    "description": "Scholarship covering tuition and maintenance for OBC students in post-matric education.",
+    "steps": "Apply through the National Scholarship Portal (scholarships.gov.in) with caste certificate."
+  },
+  {
+    "name": "Post-Matric Scholarship for SC/ST Students",
+    "min_age": 15, "max_age": 30, "max_annual_income": 250000, "requires_land": false,
+    "categories": ["SC", "ST"],
+    "description": "Scholarship covering tuition and maintenance for SC/ST students in post-matric education.",
+    "steps": "Apply through the National Scholarship Portal (scholarships.gov.in) with caste certificate."
+  },
+  {
+    "name": "EWS Reservation Certificate Benefits",
+    "min_age": 18, "max_age": 100, "max_annual_income": 800000, "requires_land": false,
+    "categories": ["EWS"],
+    "description": "10% reservation in government jobs and education for Economically Weaker Sections not covered by other reservations.",
+    "steps": "Apply for an EWS certificate at your local Tehsildar/Revenue office with income and asset proof."
+  },
+  {
+    "name": "Stand-Up India Scheme (SC/ST/Women Entrepreneurs)",
+    "min_age": 18, "max_age": 100, "max_annual_income": 1000000, "requires_land": false,
+    "categories": ["SC", "ST"],
+    "description": "Bank loans between Rs. 10 lakh and Rs. 1 crore for setting up a new enterprise.",
+    "steps": "Apply through any scheduled commercial bank branch or standupmitra.in."
+  }
+]
