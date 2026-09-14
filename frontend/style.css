@@ -208,7 +208,9 @@ label:first-child {
   margin-top: 0;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   padding: 9px 10px;
   margin-top: 5px;
   border: 1px solid var(--border);
@@ -236,19 +238,6 @@ button:hover {
   background: #142720;
 }
 
-#waterRefreshBtn {
-  padding: 11px 20px;
-  background: var(--green-dark);
-  color: var(--paper);
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-#waterRefreshBtn:hover {
-  background: #142720;
-}
-
 /* ---------- Result boxes ---------- */
 
 .result-box {
@@ -264,10 +253,24 @@ button:hover {
   display: block;
 }
 
-.result-box.success { border-left: 4px solid var(--green-dark); }
-.result-box.warning { border-left: 4px solid var(--gold); }
-.result-box.error   { border-left: 4px solid var(--red); }
-.result-box.urgent  { border-left: 4px solid var(--red); background: #fdf2f0; } /* stands out from normal results */
+.result-box.success {
+  border-left: 4px solid var(--green-dark);
+}
+
+.result-box.warning {
+  border-left: 4px solid var(--gold);
+}
+
+.result-box.error {
+  border-left: 4px solid var(--red);
+}
+
+.result-box.urgent {
+  border-left: 4px solid var(--red);
+  background: #fdf2f0;
+}
+
+/* stands out from normal results */
 
 html[dir="rtl"] .result-box.success,
 html[dir="rtl"] .result-box.warning,
@@ -320,7 +323,8 @@ html[dir="rtl"] .result-box.urgent {
 .chat-message.user {
   background: var(--green-dark);
   color: var(--paper);
-  margin-left: auto; /* pushes the user's messages to the right */
+  margin-left: auto;
+  /* pushes the user's messages to the right */
 }
 
 .chat-message.assistant {
@@ -346,57 +350,124 @@ html[dir="rtl"] .result-box.urgent {
   white-space: nowrap;
 }
 
-/* ---------- Employment: role choice, auth boxes, dashboards ---------- */
+/* ---------- Employment: top bar, view switching, public feed ---------- */
 
-.emp-role-choice {
+.employment-top-bar {
   display: flex;
-  gap: 14px;
+  justify-content: space-between;
+  align-items: flex-start;
   flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.role-card {
-  flex: 1;
-  min-width: 200px;
-  margin-top: 0;
-  padding: 28px 20px;
-  background: white;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--green-dark);
-  font-size: 15px;
-  cursor: pointer;
+.employment-top-bar h2 {
+  margin-bottom: 4px;
+}
+
+.employment-top-bar>button {
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+/* Every employment "view" (feed / auth / profile) shares this - only one shows at a time */
+.emp-view {
+  display: none;
+}
+
+.emp-view.active {
+  display: block;
+}
+
+.auth-box,
+.dashboard-box {
+  /* visibility is handled by .emp-view above; these classes now only carry their
+     own extra styling (dashboard-box h3 spacing, etc.) */
+}
+
+/* ---------- The public feed itself - Instagram/Facebook-style scrollable cards ---------- */
+
+.feed-list {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+}
+
+.worker-post {
+  background: white;
+  border: 1px solid var(--border);
+  padding: 18px;
+}
+
+.worker-post-header {
+  display: flex;
   align-items: center;
-  text-align: center;
-  gap: 8px;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
-.role-card:hover {
-  border-left-color: var(--gold);
-  border-left-width: 6px;
-}
-
-.role-card-icon {
-  font-size: 36px;
-}
-
-.role-card-title {
+.worker-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  /* the other deliberate circle in this design, alongside the chat bubble - avatars read as circles everywhere */
+  background: var(--green-dark);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 17px;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
-.role-card-desc {
-  font-size: 13px;
+.worker-post-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+}
+
+.worker-post-location {
+  font-size: 12px;
   color: var(--brown);
 }
 
-.auth-box, .dashboard-box, #empRoleChoice {
-  display: none; /* toggled by script.js - only one employment view is visible at a time */
+.worker-post-bio {
+  font-size: 14px;
+  margin: 10px 0;
+  line-height: 1.5;
 }
 
-.auth-box.active, .dashboard-box.active, #empRoleChoice.active {
+.worker-post-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.skill-tag {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--brown);
+  border-radius: 3px;
+}
+
+.call-btn {
   display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  background: var(--green-dark);
+  color: var(--paper);
+  padding: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  box-sizing: border-box;
+}
+
+.call-btn:hover {
+  background: #142720;
 }
 
 .auth-tabs {
@@ -474,52 +545,6 @@ html[dir="rtl"] .result-box.urgent {
   gap: 10px;
 }
 
-.job-card {
-  background: white;
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--green-dark);
-  padding: 14px;
-}
-
-.job-card .job-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.job-card .job-card-header h4 {
-  margin: 0;
-  font-size: 15px;
-}
-
-.job-card p {
-  margin: 6px 0 0 0;
-  font-size: 13px;
-  color: var(--brown);
-}
-
-.job-card button {
-  margin-top: 0;
-  padding: 7px 14px;
-  font-size: 13px;
-}
-
-/* Small icon-labelled details (location, type, skills, posted date) - replaces
-   plain paragraphs with a tidier row of chips, an easy visual win. */
-.job-card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  margin-top: 8px;
-}
-
-.job-card-meta span {
-  font-size: 12px;
-  color: var(--brown);
-}
-
 /* Secondary (outline) and danger (red) button variants, so Delete/Withdraw don't
    look identical to the primary action on the same card. */
 .btn-secondary {
@@ -571,54 +596,9 @@ html[dir="rtl"] .result-box.urgent {
   color: var(--brown);
 }
 
-.status-tag {
-  display: inline-block;
-  padding: 3px 8px;
-  font-size: 12px;
-  font-weight: bold;
-  border-radius: 3px; /* the only rounded-corner exception - a status pill reads clearly this way */
-}
-
-.status-tag.Applied  { background: #f4ecd8; color: var(--brown); }
-.status-tag.Contacted { background: #e3edf7; color: #2a5a8a; }
-.status-tag.Hired     { background: #e3f0e6; color: var(--green-dark); }
-
-.applicant-list {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-  display: none;
-}
-
-.applicant-list.visible {
-  display: block;
-}
-
-.applicant-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
-
-.applicant-row:last-child {
-  border-bottom: none;
-}
-
-.applicant-row select {
-  margin-top: 0;
-  padding: 4px 8px;
-  font-size: 12px;
-  width: auto;
-}
-
 /* ---------- Admin panel rows ---------- */
 /* Compact, table-like rows - the admin list can get long, so this stays denser
-   than the regular job-card style used elsewhere. */
+   than the worker-post style used in the feed. */
 
 .admin-row {
   display: flex;
@@ -659,7 +639,8 @@ html[dir="rtl"] .result-box.urgent {
   right: 24px;
   width: 56px;
   height: 56px;
-  border-radius: 50%;         /* the one deliberate circle in this design - a chat bubble reads as one everywhere */
+  border-radius: 50%;
+  /* the one deliberate circle in this design - a chat bubble reads as one everywhere */
   background: var(--green-dark);
   color: var(--paper);
   border: none;
@@ -679,7 +660,8 @@ html[dir="rtl"] #chatBubble {
 }
 
 #chatPanel {
-  display: none;              /* toggled open/closed by script.js */
+  display: none;
+  /* toggled open/closed by script.js */
   position: fixed;
   bottom: 90px;
   right: 24px;
@@ -736,7 +718,9 @@ html[dir="rtl"] #chatPanel {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 480px) {
-  header, main {
+
+  header,
+  main {
     padding: 16px;
   }
 

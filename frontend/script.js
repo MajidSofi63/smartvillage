@@ -33,7 +33,6 @@ async function safeFetch(url, options) {
   }
 
   if (!response.ok) {
-    // FastAPI validation errors look like { "detail": [...] } - pull out something readable
     // FastAPI's HTTPException details are plain strings; validation errors are arrays -
     // only JSON.stringify the array case, so plain strings don't show stray quote marks
     const detail = data && data.detail
@@ -349,10 +348,11 @@ document.getElementById("disasterForm").addEventListener("submit", async functio
 
 
 // ================= EMPLOYMENT: VIEW SWITCHING =================
-// Employment has several "views" (role choice, worker auth, employer auth, worker
-// dashboard, employer dashboard) - only one is visible at a time.
+// Employment has three "views" (public feed, worker auth, worker's own profile) -
+// only one is visible at a time. Everyone sees the public feed by default; only
+// workers log in, to post or edit their own profile.
 
-const employmentViews = ["empRoleChoice", "workerAuthBox", "employerAuthBox", "workerDashboard", "employerDashboard"];
+const employmentViews = ["publicFeedView", "workerAuthBox", "workerProfileBox"];
 
 function showEmploymentView(viewId) {
   employmentViews.forEach(function (id) {
@@ -360,12 +360,8 @@ function showEmploymentView(viewId) {
   });
 }
 
-document.getElementById("chooseWorkerBtn").addEventListener("click", function () {
+document.getElementById("showWorkerAuthBtn").addEventListener("click", function () {
   showEmploymentView("workerAuthBox");
-});
-
-document.getElementById("chooseEmployerBtn").addEventListener("click", function () {
-  showEmploymentView("employerAuthBox");
 });
 
 document.querySelectorAll(".back-btn").forEach(function (btn) {
@@ -374,7 +370,7 @@ document.querySelectorAll(".back-btn").forEach(function (btn) {
   });
 });
 
-// Login/Register sub-tabs inside each auth box
+// Login/Register sub-tabs inside the auth box
 document.querySelectorAll(".auth-tab-btn").forEach(function (tabBtn) {
   tabBtn.addEventListener("click", function () {
     const box = tabBtn.closest(".auth-box");
@@ -385,28 +381,23 @@ document.querySelectorAll(".auth-tab-btn").forEach(function (tabBtn) {
   });
 });
 
-// On page load: if a saved login token exists, jump straight to that dashboard
-// instead of making the person log in again every visit.
+// On page load: if a saved login token exists, jump straight to "My Profile".
+// Otherwise show the public feed - the default, no-login-needed view.
 function restoreEmploymentSession() {
   const workerToken = localStorage.getItem("workerToken");
-  const employerToken = localStorage.getItem("employerToken");
 
   if (workerToken) {
     document.getElementById("workerDashName").textContent = localStorage.getItem("workerName") || "";
-    showEmploymentView("workerDashboard");
-    loadWorkerDashboard();
-  } else if (employerToken) {
-    document.getElementById("employerDashName").textContent = localStorage.getItem("employerName") || "";
-    showEmploymentView("employerDashboard");
-    loadEmployerDashboard();
+    showEmploymentView("workerProfileBox");
+    loadMyProfile();
   } else {
-    showEmploymentView("empRoleChoice");
-    loadPlatformStats();
+    showEmploymentView("publicFeedView");
   }
+  loadPlatformStats();
+  loadPublicFeed();
 }
 
-// Public counts shown on the role-choice screen - no login needed, just makes
-// the platform feel active instead of an empty shell before anyone's logged in.
+// Simple public count, shown above the feed - no login data exposed, just a number
 async function loadPlatformStats() {
   const result = await safeFetch(`${API_URL}/employment/stats`);
   const bar = document.getElementById("platformStatsBar");
@@ -414,11 +405,44 @@ async function loadPlatformStats() {
     bar.innerHTML = "";
     return;
   }
-  const data = result.data;
-  bar.innerHTML = `
-    <div class="stat-box"><span class="stat-number">${data.worker_count}</span><span class="stat-label">Workers Registered</span></div>
-    <div class="stat-box"><span class="stat-number">${data.employer_count}</span><span class="stat-label">Employers</span></div>
-    <div class="stat-box"><span class="stat-number">${data.job_count}</span><span class="stat-label">Jobs Posted</span></div>`;
+  bar.innerHTML = `<div class="stat-box"><span class="stat-number">${result.data.worker_count}</span><span class="stat-label">Workers Registered</span></div>`;
+}
+
+
+// ================= EMPLOYMENT: PUBLIC FEED =================
+// This is the actual "scroll and call" feed - visible to everyone, no login needed.
+
+async function loadPublicFeed() {
+  const result = await safeFetch(`${API_URL}/workers`);
+  const feedList = document.getElementById("workerFeedList");
+
+  if (!result.ok || result.data.workers.length === 0) {
+    feedList.innerHTML = "<p>📋 No one has registered yet. Be the first!</p>";
+    return;
+  }
+
+  feedList.innerHTML = "";
+  result.data.workers.forEach(function (worker) {
+    const initial = worker.name.trim().charAt(0).toUpperCase();
+    const skillTags = worker.skills.split(",").map(function (s) {
+      return `<span class="skill-tag">${s.trim()}</span>`;
+    }).join("");
+
+    const post = document.createElement("div");
+    post.className = "worker-post";
+    post.innerHTML = `
+      <div class="worker-post-header">
+        <div class="worker-avatar">${initial}</div>
+        <div>
+          <div class="worker-post-name">${worker.name}</div>
+          <div class="worker-post-location">📍 ${worker.location}</div>
+        </div>
+      </div>
+      ${worker.bio ? `<div class="worker-post-bio">${worker.bio}</div>` : ""}
+      <div class="worker-post-skills">${skillTags}</div>
+      <a class="call-btn" href="tel:${worker.phone}">📞 Call ${worker.phone}</a>`;
+    feedList.appendChild(post);
+  });
 }
 
 
@@ -433,6 +457,7 @@ document.getElementById("workerRegisterForm").addEventListener("submit", async f
     phone: document.getElementById("workerRegPhone").value,
     location: document.getElementById("workerRegLocation").value,
     skills: document.getElementById("workerRegSkills").value,
+    bio: document.getElementById("workerRegBio").value,
     password: document.getElementById("workerRegPassword").value,
   };
 
@@ -448,8 +473,10 @@ document.getElementById("workerRegisterForm").addEventListener("submit", async f
   localStorage.setItem("workerToken", result.data.token);
   localStorage.setItem("workerName", result.data.name);
   document.getElementById("workerDashName").textContent = result.data.name;
-  showEmploymentView("workerDashboard");
-  loadWorkerDashboard();
+  showEmploymentView("workerProfileBox");
+  loadMyProfile();
+  loadPublicFeed(); // the new profile now appears in the feed too
+  loadPlatformStats();
 });
 
 document.getElementById("workerLoginForm").addEventListener("submit", async function (event) {
@@ -472,283 +499,142 @@ document.getElementById("workerLoginForm").addEventListener("submit", async func
   localStorage.setItem("workerToken", result.data.token);
   localStorage.setItem("workerName", result.data.name);
   document.getElementById("workerDashName").textContent = result.data.name;
-  showEmploymentView("workerDashboard");
-  loadWorkerDashboard();
+  showEmploymentView("workerProfileBox");
+  loadMyProfile();
 });
 
 document.getElementById("workerLogoutBtn").addEventListener("click", function () {
   localStorage.removeItem("workerToken");
   localStorage.removeItem("workerName");
-  showEmploymentView("empRoleChoice");
+  showEmploymentView("publicFeedView");
 });
 
 
-// ================= EMPLOYMENT: EMPLOYER AUTH =================
+// ================= EMPLOYMENT: MY PROFILE (edit / delete) =================
 
-document.getElementById("employerRegisterForm").addEventListener("submit", async function (event) {
-  event.preventDefault();
-
-  const requestData = {
-    name: document.getElementById("employerRegName").value,
-    email: document.getElementById("employerRegEmail").value,
-    password: document.getElementById("employerRegPassword").value,
-  };
-
-  const result = await safeFetch(`${API_URL}/auth/register-employer`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestData),
-  });
-
-  if (!result.ok || !result.data.success) {
-    showResult("employerAuthResult", result.ok ? result.data.message : result.errorMessage, "error");
-    return;
-  }
-
-  localStorage.setItem("employerToken", result.data.token);
-  localStorage.setItem("employerName", result.data.name);
-  document.getElementById("employerDashName").textContent = result.data.name;
-  showEmploymentView("employerDashboard");
-  loadEmployerDashboard();
-});
-
-document.getElementById("employerLoginForm").addEventListener("submit", async function (event) {
-  event.preventDefault();
-
-  const requestData = {
-    email: document.getElementById("employerLoginEmail").value,
-    password: document.getElementById("employerLoginPassword").value,
-  };
-
-  const result = await safeFetch(`${API_URL}/auth/login-employer`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestData),
-  });
-
-  if (!result.ok || !result.data.success) {
-    showResult("employerAuthResult", result.ok ? result.data.message : result.errorMessage, "error");
-    return;
-  }
-
-  localStorage.setItem("employerToken", result.data.token);
-  localStorage.setItem("employerName", result.data.name);
-  document.getElementById("employerDashName").textContent = result.data.name;
-  showEmploymentView("employerDashboard");
-  loadEmployerDashboard();
-});
-
-document.getElementById("employerLogoutBtn").addEventListener("click", function () {
-  localStorage.removeItem("employerToken");
-  localStorage.removeItem("employerName");
-  showEmploymentView("empRoleChoice");
-});
-
-
-// ================= EMPLOYMENT: WORKER DASHBOARD =================
-
-async function loadWorkerDashboard() {
+async function loadMyProfile() {
   const token = localStorage.getItem("workerToken");
+  const result = await safeFetch(`${API_URL}/worker/profile`, { headers: { "X-Auth-Token": token } });
 
-  // ---- Available jobs, sorted by skill match ----
-  const jobsResult = await safeFetch(`${API_URL}/jobs/for-me`, { headers: { "X-Auth-Token": token } });
-  const jobsList = document.getElementById("jobsList");
-  jobsList.innerHTML = "";
+  if (!result.ok) return; // token expired or similar - form just stays empty, no crash
 
-  if (jobsResult.ok && jobsResult.data.jobs.length > 0) {
-    jobsResult.data.jobs.forEach(function (job) {
-      const card = document.createElement("div");
-      card.className = "job-card";
-      card.innerHTML = `
-        <div class="job-card-header">
-          <h4>${job.title}</h4>
-          <button data-job-id="${job.id}" class="applyBtn">Apply</button>
-        </div>
-        <div class="job-card-meta">
-          <span>📍 ${job.location}</span>
-          <span>💼 ${job.type}</span>
-          <span>🛠️ ${job.skills}</span>
-        </div>`;
-      jobsList.appendChild(card);
-    });
-
-    // wire up every "Apply" button just created
-    jobsList.querySelectorAll(".applyBtn").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        const applyResult = await safeFetch(`${API_URL}/jobs/${btn.dataset.jobId}/apply`, {
-          method: "POST", headers: { "X-Auth-Token": token },
-        });
-        btn.textContent = applyResult.ok && applyResult.data.success ? "Applied ✓" : "Already Applied";
-        btn.disabled = true;
-        loadWorkerDashboard(); // refresh "My Applications" below to include the new one
-      });
-    });
-  } else {
-    jobsList.innerHTML = "<p>🔍 No jobs posted yet. Check back soon.</p>";
-  }
-
-  // ---- This worker's own application history ----
-  const appsResult = await safeFetch(`${API_URL}/worker/applications`, { headers: { "X-Auth-Token": token } });
-  const appsList = document.getElementById("myApplicationsList");
-  appsList.innerHTML = "";
-
-  if (appsResult.ok && appsResult.data.applications.length > 0) {
-    appsResult.data.applications.forEach(function (app) {
-      const card = document.createElement("div");
-      card.className = "job-card";
-      card.innerHTML = `
-        <div class="job-card-header">
-          <h4>${app.title}</h4>
-          <span class="status-tag ${app.status}">${app.status}</span>
-        </div>
-        <div class="job-card-meta">
-          <span>📍 ${app.location}</span>
-          <span>💼 ${app.type}</span>
-        </div>
-        <button class="btn-danger withdrawBtn" data-app-id="${app.application_id}">Withdraw</button>`;
-      appsList.appendChild(card);
-    });
-
-    // wire up every "Withdraw" button just created
-    appsList.querySelectorAll(".withdrawBtn").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        await safeFetch(`${API_URL}/worker/applications/${btn.dataset.appId}`, {
-          method: "DELETE", headers: { "X-Auth-Token": token },
-        });
-        loadWorkerDashboard(); // refresh both lists - the job reappears as available to re-apply to
-      });
-    });
-  } else {
-    appsList.innerHTML = "<p>📋 You haven't applied to any jobs yet.</p>";
-  }
-
-  // ---- Stats summary ----
-  const hiredCount = appsResult.ok ? appsResult.data.applications.filter(a => a.status === "Hired").length : 0;
-  document.getElementById("workerStatsBar").innerHTML = `
-    <div class="stat-box"><span class="stat-number">${jobsResult.ok ? jobsResult.data.jobs.length : "-"}</span><span class="stat-label">Jobs Available</span></div>
-    <div class="stat-box"><span class="stat-number">${appsResult.ok ? appsResult.data.applications.length : "-"}</span><span class="stat-label">Applications Sent</span></div>
-    <div class="stat-box"><span class="stat-number">${hiredCount}</span><span class="stat-label">Times Hired</span></div>`;
+  const profile = result.data.profile;
+  document.getElementById("workerEditName").value = profile.name;
+  document.getElementById("workerEditPhone").value = profile.phone;
+  document.getElementById("workerEditLocation").value = profile.location;
+  document.getElementById("workerEditSkills").value = profile.skills;
+  document.getElementById("workerEditBio").value = profile.bio;
 }
 
-
-// ================= EMPLOYMENT: EMPLOYER DASHBOARD =================
-
-document.getElementById("jobPostForm").addEventListener("submit", async function (event) {
+document.getElementById("workerEditForm").addEventListener("submit", async function (event) {
   event.preventDefault();
-  const token = localStorage.getItem("employerToken");
+  const token = localStorage.getItem("workerToken");
 
   const requestData = {
-    title: document.getElementById("jobTitle").value,
-    skills: document.getElementById("jobSkills").value,
-    location: document.getElementById("jobLocation").value,
-    job_type: document.getElementById("jobType").value,
-    contact: document.getElementById("jobContact").value,
+    name: document.getElementById("workerEditName").value,
+    phone: document.getElementById("workerEditPhone").value,
+    location: document.getElementById("workerEditLocation").value,
+    skills: document.getElementById("workerEditSkills").value,
+    bio: document.getElementById("workerEditBio").value,
   };
 
-  const result = await safeFetch(`${API_URL}/jobs`, {
-    method: "POST", headers: { "Content-Type": "application/json", "X-Auth-Token": token },
+  const result = await safeFetch(`${API_URL}/worker/profile`, {
+    method: "PUT", headers: { "Content-Type": "application/json", "X-Auth-Token": token },
     body: JSON.stringify(requestData),
   });
 
   if (!result.ok) {
-    showResult("jobPostResult", result.errorMessage, "error");
+    showResult("workerEditResult", result.errorMessage, "error");
     return;
   }
 
-  showResult("jobPostResult", "✅ Job posted successfully.", "success");
-  event.target.reset();
-  loadEmployerDashboard();
+  localStorage.setItem("workerName", requestData.name);
+  document.getElementById("workerDashName").textContent = requestData.name;
+  showResult("workerEditResult", "✅ Profile updated - the feed now shows your changes.", "success");
+  loadPublicFeed();
 });
 
-async function loadEmployerDashboard() {
-  const token = localStorage.getItem("employerToken");
+document.getElementById("deleteProfileBtn").addEventListener("click", async function () {
+  if (!confirm("Delete your profile? It will be removed from the public feed.")) return;
 
-  const jobsResult = await safeFetch(`${API_URL}/jobs/mine`, { headers: { "X-Auth-Token": token } });
-  const myJobsList = document.getElementById("myJobsList");
-  myJobsList.innerHTML = "";
+  const token = localStorage.getItem("workerToken");
+  await safeFetch(`${API_URL}/worker/profile`, { method: "DELETE", headers: { "X-Auth-Token": token } });
 
-  // stats bar, even when there are zero jobs yet
-  const totalApplicants = jobsResult.ok ? jobsResult.data.jobs.reduce((sum, j) => sum + j.applicant_count, 0) : 0;
-  document.getElementById("employerStatsBar").innerHTML = `
-    <div class="stat-box"><span class="stat-number">${jobsResult.ok ? jobsResult.data.jobs.length : "-"}</span><span class="stat-label">Jobs Posted</span></div>
-    <div class="stat-box"><span class="stat-number">${totalApplicants}</span><span class="stat-label">Total Applicants</span></div>`;
+  localStorage.removeItem("workerToken");
+  localStorage.removeItem("workerName");
+  showEmploymentView("publicFeedView");
+  loadPublicFeed();
+  loadPlatformStats();
+});
 
-  if (!jobsResult.ok || jobsResult.data.jobs.length === 0) {
-    myJobsList.innerHTML = "<p>📋 You haven't posted any jobs yet.</p>";
+
+// ================= ADMIN PANEL =================
+// The admin password is kept only in this variable (never localStorage) - closing
+// the tab or refreshing requires logging in again, which is the right trade-off
+// for something this sensitive. This is the site owner's view into the same
+// worker database the public feed reads from, plus contact emails and delete controls.
+
+let adminPassword = null;
+
+document.getElementById("adminLoginForm").addEventListener("submit", async function (event) {
+  event.preventDefault();
+  const enteredPassword = document.getElementById("adminPasswordInput").value;
+
+  const result = await safeFetch(`${API_URL}/admin/verify`, {
+    headers: { "X-Admin-Password": enteredPassword },
+  });
+
+  if (!result.ok) {
+    showResult("adminAuthResult", "Incorrect password.", "error");
     return;
   }
 
-  jobsResult.data.jobs.forEach(function (job) {
-    const card = document.createElement("div");
-    card.className = "job-card";
-    card.innerHTML = `
-      <div class="job-card-header">
-        <h4>${job.title}</h4>
-        <span>
-          <button class="btn-secondary viewApplicantsBtn" data-job-id="${job.id}">👥 Applicants (${job.applicant_count})</button>
-          <button class="btn-danger deleteJobBtn" data-job-id="${job.id}">Delete</button>
-        </span>
-      </div>
-      <div class="job-card-meta">
-        <span>📍 ${job.location}</span>
-        <span>💼 ${job.type}</span>
-        <span>🛠️ ${job.skills}</span>
-      </div>
-      <div class="applicant-list" id="applicants-${job.id}"></div>`;
-    myJobsList.appendChild(card);
-  });
+  adminPassword = enteredPassword;
+  document.getElementById("adminLoginForm").classList.remove("active");
+  document.getElementById("adminDashboard").classList.add("active");
+  loadAdminDashboard();
+});
 
-  // wire up every "Delete" button just created
-  myJobsList.querySelectorAll(".deleteJobBtn").forEach(function (btn) {
-    btn.addEventListener("click", async function () {
-      if (!confirm("Delete this job posting? This also removes all its applications.")) return;
-      await safeFetch(`${API_URL}/jobs/${btn.dataset.jobId}`, {
-        method: "DELETE", headers: { "X-Auth-Token": token },
-      });
-      loadEmployerDashboard();
+document.getElementById("adminLogoutBtn").addEventListener("click", function () {
+  adminPassword = null;
+  document.getElementById("adminDashboard").classList.remove("active");
+  document.getElementById("adminLoginForm").classList.add("active");
+  document.getElementById("adminPasswordInput").value = "";
+});
+
+async function loadAdminDashboard() {
+  const headers = { "X-Admin-Password": adminPassword };
+  const result = await safeFetch(`${API_URL}/admin/workers`, { headers });
+
+  document.getElementById("adminStatsBar").innerHTML =
+    `<div class="stat-box"><span class="stat-number">${result.ok ? result.data.workers.length : "-"}</span><span class="stat-label">Registered Workers</span></div>`;
+
+  const workersList = document.getElementById("adminWorkersList");
+  workersList.innerHTML = "";
+
+  if (result.ok && result.data.workers.length > 0) {
+    result.data.workers.forEach(function (worker) {
+      const row = document.createElement("div");
+      row.className = "admin-row";
+      row.innerHTML = `
+        <div class="admin-row-details">
+          <strong>${worker.name}</strong>
+          <span>${worker.email} · ${worker.phone} · ${worker.location}</span>
+          <span>Skills: ${worker.skills}</span>
+        </div>
+        <button class="btn-danger deleteWorkerBtn" data-id="${worker.id}">Delete</button>`;
+      workersList.appendChild(row);
     });
-  });
-
-  // wire up every "View Applicants" button just created
-  myJobsList.querySelectorAll(".viewApplicantsBtn").forEach(function (btn) {
-    btn.addEventListener("click", async function () {
-      const box = document.getElementById(`applicants-${btn.dataset.jobId}`);
-      const isOpening = !box.classList.contains("visible");
-      box.classList.toggle("visible");
-      if (!isOpening) return; // just closing it, no need to re-fetch
-
-      const applicantsResult = await safeFetch(`${API_URL}/jobs/${btn.dataset.jobId}/applicants`, {
-        headers: { "X-Auth-Token": token },
-      });
-
-      if (!applicantsResult.ok || applicantsResult.data.applicants.length === 0) {
-        box.innerHTML = "<p>No applicants yet.</p>";
-        return;
-      }
-
-      box.innerHTML = "";
-      applicantsResult.data.applicants.forEach(function (applicant) {
-        const row = document.createElement("div");
-        row.className = "applicant-row";
-        row.innerHTML = `
-          <span><strong>${applicant.name}</strong> · ${applicant.location} · ${applicant.phone}</span>
-          <select class="statusSelect" data-app-id="${applicant.application_id}">
-            <option value="Applied" ${applicant.status === "Applied" ? "selected" : ""}>Applied</option>
-            <option value="Contacted" ${applicant.status === "Contacted" ? "selected" : ""}>Contacted</option>
-            <option value="Hired" ${applicant.status === "Hired" ? "selected" : ""}>Hired</option>
-          </select>`;
-        box.appendChild(row);
-      });
-
-      // wire up the status dropdown for this applicant list - one clean control
-      // instead of two separate "Mark X" buttons
-      box.querySelectorAll(".statusSelect").forEach(function (select) {
-        select.addEventListener("change", async function () {
-          await safeFetch(`${API_URL}/applications/${select.dataset.appId}/status`, {
-            method: "PATCH", headers: { "Content-Type": "application/json", "X-Auth-Token": token },
-            body: JSON.stringify({ status: select.value }),
-          });
-          loadEmployerDashboard(); // refreshes the "Applicants (N)" count and stats bar too
-        });
+    workersList.querySelectorAll(".deleteWorkerBtn").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        if (!confirm("Remove this worker's profile from the platform?")) return;
+        await safeFetch(`${API_URL}/admin/workers/${btn.dataset.id}`, { method: "DELETE", headers });
+        loadAdminDashboard();
       });
     });
-  });
+  } else {
+    workersList.innerHTML = "<p>No workers registered yet.</p>";
+  }
 }
 
 
@@ -786,154 +672,3 @@ document.getElementById("chatForm").addEventListener("submit", async function (e
   chatWindow.innerHTML += `<div class="chat-message assistant">${replyText}</div>`;
   chatWindow.scrollTop = chatWindow.scrollHeight;
 });
-
-
-// ================= ADMIN PANEL =================
-// The admin password is kept only in this variable (never localStorage) - closing
-// the tab or refreshing requires logging in again, which is the right trade-off
-// for something this sensitive.
-
-let adminPassword = null;
-
-document.getElementById("adminLoginForm").addEventListener("submit", async function (event) {
-  event.preventDefault();
-  const enteredPassword = document.getElementById("adminPasswordInput").value;
-
-  const result = await safeFetch(`${API_URL}/admin/verify`, {
-    headers: { "X-Admin-Password": enteredPassword },
-  });
-
-  if (!result.ok) {
-    showResult("adminAuthResult", "Incorrect password.", "error");
-    return;
-  }
-
-  adminPassword = enteredPassword;
-  document.getElementById("adminLoginForm").classList.remove("active");
-  document.getElementById("adminDashboard").classList.add("active");
-  loadAdminDashboard();
-});
-
-document.getElementById("adminLogoutBtn").addEventListener("click", function () {
-  adminPassword = null;
-  document.getElementById("adminDashboard").classList.remove("active");
-  document.getElementById("adminLoginForm").classList.add("active");
-  document.getElementById("adminPasswordInput").value = "";
-});
-
-async function loadAdminDashboard() {
-  const headers = { "X-Admin-Password": adminPassword };
-
-  // fetch all four datasets at once rather than one after another
-  const [workersResult, employersResult, jobsResult, applicationsResult] = await Promise.all([
-    safeFetch(`${API_URL}/admin/workers`, { headers }),
-    safeFetch(`${API_URL}/admin/employers`, { headers }),
-    safeFetch(`${API_URL}/admin/jobs`, { headers }),
-    safeFetch(`${API_URL}/admin/applications`, { headers }),
-  ]);
-
-  // ---- Summary stats bar ----
-  document.getElementById("adminStatsBar").innerHTML = `
-    <div class="stat-box"><span class="stat-number">${workersResult.ok ? workersResult.data.workers.length : "-"}</span><span class="stat-label">Workers</span></div>
-    <div class="stat-box"><span class="stat-number">${employersResult.ok ? employersResult.data.employers.length : "-"}</span><span class="stat-label">Employers</span></div>
-    <div class="stat-box"><span class="stat-number">${jobsResult.ok ? jobsResult.data.jobs.length : "-"}</span><span class="stat-label">Jobs Posted</span></div>
-    <div class="stat-box"><span class="stat-number">${applicationsResult.ok ? applicationsResult.data.applications.length : "-"}</span><span class="stat-label">Applications</span></div>`;
-
-  // ---- Workers ----
-  const workersList = document.getElementById("adminWorkersList");
-  workersList.innerHTML = "";
-  if (workersResult.ok && workersResult.data.workers.length > 0) {
-    workersResult.data.workers.forEach(function (worker) {
-      const row = document.createElement("div");
-      row.className = "admin-row";
-      row.innerHTML = `
-        <div class="admin-row-details">
-          <strong>${worker.name}</strong>
-          <span>${worker.email} · ${worker.phone} · ${worker.location}</span>
-          <span>Skills: ${worker.skills}</span>
-        </div>
-        <button class="btn-danger deleteWorkerBtn" data-id="${worker.id}">Delete</button>`;
-      workersList.appendChild(row);
-    });
-    workersList.querySelectorAll(".deleteWorkerBtn").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        if (!confirm("Remove this worker's profile/listing?")) return;
-        await safeFetch(`${API_URL}/admin/workers/${btn.dataset.id}`, { method: "DELETE", headers });
-        loadAdminDashboard();
-      });
-    });
-  } else {
-    workersList.innerHTML = "<p>No workers registered yet.</p>";
-  }
-
-  // ---- Employers ----
-  const employersList = document.getElementById("adminEmployersList");
-  employersList.innerHTML = "";
-  if (employersResult.ok && employersResult.data.employers.length > 0) {
-    employersResult.data.employers.forEach(function (employer) {
-      const row = document.createElement("div");
-      row.className = "admin-row";
-      row.innerHTML = `
-        <div class="admin-row-details">
-          <strong>${employer.name}</strong>
-          <span>${employer.email}</span>
-        </div>
-        <button class="btn-danger deleteEmployerBtn" data-id="${employer.id}">Delete</button>`;
-      employersList.appendChild(row);
-    });
-    employersList.querySelectorAll(".deleteEmployerBtn").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        if (!confirm("Remove this employer's profile/listing?")) return;
-        await safeFetch(`${API_URL}/admin/employers/${btn.dataset.id}`, { method: "DELETE", headers });
-        loadAdminDashboard();
-      });
-    });
-  } else {
-    employersList.innerHTML = "<p>No employers registered yet.</p>";
-  }
-
-  // ---- Jobs ----
-  const jobsList = document.getElementById("adminJobsList");
-  jobsList.innerHTML = "";
-  if (jobsResult.ok && jobsResult.data.jobs.length > 0) {
-    jobsResult.data.jobs.forEach(function (job) {
-      const row = document.createElement("div");
-      row.className = "admin-row";
-      row.innerHTML = `
-        <div class="admin-row-details">
-          <strong>${job.title}</strong>
-          <span>Posted by ${job.employer_name} (${job.employer_email}) · ${job.location} · ${job.type}</span>
-          <span>${job.applicant_count} applicant(s)</span>
-        </div>
-        <button class="btn-danger deleteAdminJobBtn" data-id="${job.id}">Delete</button>`;
-      jobsList.appendChild(row);
-    });
-    jobsList.querySelectorAll(".deleteAdminJobBtn").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        if (!confirm("Delete this job posting?")) return;
-        await safeFetch(`${API_URL}/admin/jobs/${btn.dataset.id}`, { method: "DELETE", headers });
-        loadAdminDashboard();
-      });
-    });
-  } else {
-    jobsList.innerHTML = "<p>No jobs posted yet.</p>";
-  }
-
-  // ---- Applications ----
-  const applicationsList = document.getElementById("adminApplicationsList");
-  applicationsList.innerHTML = "";
-  if (applicationsResult.ok && applicationsResult.data.applications.length > 0) {
-    applicationsResult.data.applications.forEach(function (application) {
-      const row = document.createElement("div");
-      row.className = "admin-row";
-      row.innerHTML = `
-        <div class="admin-row-details">
-          <strong>${application.worker_name}</strong> applied to <strong>${application.job_title}</strong>
-          <span>${application.worker_phone} · <span class="status-tag ${application.status}">${application.status}</span></span>
-        </div>`;
-      applicationsList.appendChild(row);
-    });
-  } else {
-    applicationsList.innerHTML = "<p>No applications yet.</p>";
-  }
-}

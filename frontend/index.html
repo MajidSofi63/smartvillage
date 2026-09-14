@@ -5,12 +5,14 @@
 
 <!DOCTYPE html>
 <html lang="en" id="htmlRoot">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Smart Village Platform</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <!-- Top header: platform name + language switcher -->
@@ -71,7 +73,7 @@
         </div>
         <div class="card" data-goto="employment">
           <h3 data-i18n="cardEmploymentTitle">💼 Employment</h3>
-          <p data-i18n="cardEmploymentDesc">Find local jobs that match your skills.</p>
+          <p data-i18n="cardEmploymentDesc">Browse local workers, or register if you're looking for work.</p>
         </div>
       </div>
     </section>
@@ -158,7 +160,8 @@
     <!-- ================= WATER MANAGEMENT TAB ================= -->
     <section id="water" class="tab-section">
       <h2 data-i18n="waterHeading">Smart Water Management</h2>
-      <p class="section-desc" data-i18n="waterDesc">Real soil moisture and rainfall data for your area, via Open-Meteo.</p>
+      <p class="section-desc" data-i18n="waterDesc">Real soil moisture and rainfall data for your area, via Open-Meteo.
+      </p>
 
       <form id="waterForm">
         <label for="waterCity" data-i18n="labelCity">Your City/Town</label>
@@ -186,30 +189,28 @@
     </section>
 
     <!-- ================= EMPLOYMENT TAB ================= -->
+    <!-- Public feed by default - anyone can scroll and call a worker directly.
+         Only workers register/log in (to post or edit their own profile) -
+         there's no separate employer account or job-posting flow. -->
     <section id="employment" class="tab-section">
-      <h2 data-i18n="employmentHeading">Employment Matching</h2>
-      <p class="section-desc" data-i18n="employmentDesc">A real job board: log in as a worker or an employer.</p>
-
-      <!-- View 1: choose a role (shown when nobody is logged in) -->
-      <div id="empRoleChoice">
-        <div id="platformStatsBar" class="stats-bar"></div>
-
-        <div class="emp-role-choice">
-          <button id="chooseWorkerBtn" class="role-card">
-            <span class="role-card-icon">🧑‍🌾</span>
-            <span class="role-card-title" data-i18n="iAmWorker">I'm Looking for Work</span>
-            <span class="role-card-desc" data-i18n="iAmWorkerDesc">Register your skills and apply to local jobs</span>
-          </button>
-          <button id="chooseEmployerBtn" class="role-card">
-            <span class="role-card-icon">🏢</span>
-            <span class="role-card-title" data-i18n="iAmEmployer">I'm Hiring</span>
-            <span class="role-card-desc" data-i18n="iAmEmployerDesc">Post an opening and find local workers</span>
-          </button>
+      <div class="employment-top-bar">
+        <div>
+          <h2 data-i18n="employmentHeading">Find Local Workers</h2>
+          <p class="section-desc" data-i18n="employmentDesc">Browse profiles below and call directly - no signup needed
+            to look.</p>
         </div>
+        <button id="showWorkerAuthBtn" class="btn-secondary" data-i18n="lookingForWorkBtn">Looking for Work?
+          Register/Login</button>
       </div>
 
-      <!-- View 2a: worker login/register -->
-      <div id="workerAuthBox" class="auth-box">
+      <!-- View 1: the public feed (default view, visible to everyone) -->
+      <div id="publicFeedView" class="emp-view active">
+        <div id="platformStatsBar" class="stats-bar"></div>
+        <div id="workerFeedList" class="feed-list"></div>
+      </div>
+
+      <!-- View 2: worker login/register -->
+      <div id="workerAuthBox" class="emp-view auth-box">
         <div class="auth-tabs">
           <button class="auth-tab-btn active" data-authtab="workerLoginForm" data-i18n="btnLogin">Login</button>
           <button class="auth-tab-btn" data-authtab="workerRegisterForm" data-i18n="btnRegister">Register</button>
@@ -228,110 +229,63 @@
           <input type="text" id="workerRegName" required>
           <label data-i18n="labelEmail">Email</label>
           <input type="email" id="workerRegEmail" required>
-          <label data-i18n="labelPhone">Phone Number (for employers to contact you)</label>
+          <label data-i18n="labelPhone">Phone Number (shown publicly, so people can call you)</label>
           <input type="text" id="workerRegPhone" required>
           <label data-i18n="labelLocation">Your Village/Town</label>
           <input type="text" id="workerRegLocation" required>
           <label data-i18n="labelSkills">Your Skills</label>
           <textarea id="workerRegSkills" rows="2" placeholder="e.g. farming, driving, tailoring" required></textarea>
+          <label data-i18n="labelBio">Short Intro (optional)</label>
+          <textarea id="workerRegBio" rows="2"
+            placeholder="e.g. 5 years experience as a farm labourer, available immediately"></textarea>
           <label data-i18n="labelPassword">Create a Password</label>
           <input type="password" id="workerRegPassword" required>
           <button type="submit" data-i18n="btnRegister">Register</button>
         </form>
 
         <div id="workerAuthResult" class="result-box"></div>
-        <button class="back-btn" data-backto="empRoleChoice" data-i18n="btnBack">← Back</button>
+        <button class="back-btn" data-backto="publicFeedView" data-i18n="btnBack">← Back to Feed</button>
       </div>
 
-      <!-- View 2b: employer login/register -->
-      <div id="employerAuthBox" class="auth-box">
-        <div class="auth-tabs">
-          <button class="auth-tab-btn active" data-authtab="employerLoginForm" data-i18n="btnLogin">Login</button>
-          <button class="auth-tab-btn" data-authtab="employerRegisterForm" data-i18n="btnRegister">Register</button>
-        </div>
-
-        <form id="employerLoginForm" class="auth-form active">
-          <label data-i18n="labelEmail">Email</label>
-          <input type="email" id="employerLoginEmail" required>
-          <label data-i18n="labelPassword">Password</label>
-          <input type="password" id="employerLoginPassword" required>
-          <button type="submit" data-i18n="btnLogin">Login</button>
-        </form>
-
-        <form id="employerRegisterForm" class="auth-form">
-          <label data-i18n="labelName">Your Name / Business Name</label>
-          <input type="text" id="employerRegName" required>
-          <label data-i18n="labelEmail">Email</label>
-          <input type="email" id="employerRegEmail" required>
-          <label data-i18n="labelPassword">Create a Password</label>
-          <input type="password" id="employerRegPassword" required>
-          <button type="submit" data-i18n="btnRegister">Register</button>
-        </form>
-
-        <div id="employerAuthResult" class="result-box"></div>
-        <button class="back-btn" data-backto="empRoleChoice" data-i18n="btnBack">← Back</button>
-      </div>
-
-      <!-- View 3a: worker dashboard -->
-      <div id="workerDashboard" class="dashboard-box">
+      <!-- View 3: the logged-in worker's own profile management -->
+      <div id="workerProfileBox" class="emp-view dashboard-box">
         <div class="dashboard-header">
           <span data-i18n="welcomeText">Welcome,</span> <strong id="workerDashName"></strong>
           <button id="workerLogoutBtn" data-i18n="btnLogout">Logout</button>
         </div>
 
-        <div id="workerStatsBar" class="stats-bar"></div>
+        <h3 data-i18n="myProfileTitle">My Profile</h3>
+        <p class="section-desc" data-i18n="myProfileDesc">This is exactly what shows up in the public feed.</p>
 
-        <h3 data-i18n="availableJobsTitle">Available Jobs</h3>
-        <div id="jobsList" class="card-list"></div>
+        <form id="workerEditForm">
+          <label data-i18n="labelName">Your Name</label>
+          <input type="text" id="workerEditName" required>
 
-        <h3 data-i18n="myApplicationsTitle">My Applications</h3>
-        <div id="myApplicationsList" class="card-list"></div>
-      </div>
+          <label data-i18n="labelPhone">Phone Number</label>
+          <input type="text" id="workerEditPhone" required>
 
-      <!-- View 3b: employer dashboard -->
-      <div id="employerDashboard" class="dashboard-box">
-        <div class="dashboard-header">
-          <span data-i18n="welcomeText">Welcome,</span> <strong id="employerDashName"></strong>
-          <button id="employerLogoutBtn" data-i18n="btnLogout">Logout</button>
-        </div>
+          <label data-i18n="labelLocation">Your Village/Town</label>
+          <input type="text" id="workerEditLocation" required>
 
-        <div id="employerStatsBar" class="stats-bar"></div>
+          <label data-i18n="labelSkills">Your Skills</label>
+          <textarea id="workerEditSkills" rows="2" required></textarea>
 
-        <h3 data-i18n="postJobTitle">Post a New Job</h3>
-        <form id="jobPostForm">
-          <label data-i18n="labelJobTitle">Job Title</label>
-          <input type="text" id="jobTitle" required>
+          <label data-i18n="labelBio">Short Intro</label>
+          <textarea id="workerEditBio" rows="2"></textarea>
 
-          <label data-i18n="labelRequiredSkills">Required Skills</label>
-          <textarea id="jobSkills" rows="2" placeholder="e.g. masonry, construction" required></textarea>
-
-          <label data-i18n="labelLocation">Location</label>
-          <input type="text" id="jobLocation" required>
-
-          <label data-i18n="labelJobType">Type</label>
-          <select id="jobType">
-            <option value="Full-Time">Full-Time</option>
-            <option value="Daily Wage">Daily Wage</option>
-            <option value="Seasonal">Seasonal</option>
-            <option value="Self-Employed">Self-Employed</option>
-          </select>
-
-          <label data-i18n="labelContact">Contact Info</label>
-          <input type="text" id="jobContact" placeholder="phone number" required>
-
-          <button type="submit" data-i18n="btnPostJob">Post Job</button>
+          <button type="submit" data-i18n="btnSaveChanges">Save Changes</button>
         </form>
-        <div id="jobPostResult" class="result-box"></div>
+        <div id="workerEditResult" class="result-box"></div>
 
-        <h3 data-i18n="myJobsTitle">My Posted Jobs</h3>
-        <div id="myJobsList" class="card-list"></div>
+        <button id="deleteProfileBtn" class="btn-danger" data-i18n="btnDeleteProfile">Delete My Profile</button>
       </div>
     </section>
 
     <!-- ================= ADMIN TAB ================= -->
     <section id="admin" class="tab-section">
       <h2 data-i18n="adminHeading">Admin Panel</h2>
-      <p class="section-desc" data-i18n="adminDesc">Full visibility into everyone using the platform.</p>
+      <p class="section-desc" data-i18n="adminDesc">Your view into the worker database - see and moderate every
+        registered profile.</p>
 
       <!-- Password gate -->
       <form id="adminLoginForm" class="auth-form active">
@@ -352,15 +306,6 @@
 
         <h3 data-i18n="adminWorkersTitle">Registered Workers</h3>
         <div id="adminWorkersList" class="card-list"></div>
-
-        <h3 data-i18n="adminEmployersTitle">Registered Employers</h3>
-        <div id="adminEmployersList" class="card-list"></div>
-
-        <h3 data-i18n="adminJobsTitle">All Job Postings</h3>
-        <div id="adminJobsList" class="card-list"></div>
-
-        <h3 data-i18n="adminApplicationsTitle">All Applications</h3>
-        <div id="adminApplicationsList" class="card-list"></div>
       </div>
     </section>
 
@@ -382,7 +327,7 @@
 
     <form id="chatForm">
       <input type="text" id="chatInput" data-i18n-placeholder="assistantPlaceholder"
-             placeholder="e.g. How do I check if I'm eligible for a scheme?" required>
+        placeholder="e.g. How do I check if I'm eligible for a scheme?" required>
       <button type="submit" data-i18n="btnSend">Send</button>
     </form>
   </div>
@@ -390,4 +335,5 @@
   <script src="translations.js"></script>
   <script src="script.js"></script>
 </body>
+
 </html>
