@@ -379,11 +379,7 @@ html[dir="rtl"] .result-box.urgent {
   display: block;
 }
 
-.auth-box,
-.dashboard-box {
-  /* visibility is handled by .emp-view above; these classes now only carry their
-     own extra styling (dashboard-box h3 spacing, etc.) */
-}
+
 
 /* ---------- The public feed itself - Instagram/Facebook-style scrollable cards ---------- */
 
