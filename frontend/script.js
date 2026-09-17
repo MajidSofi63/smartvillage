@@ -123,6 +123,13 @@ window.onload = async function () {
   applyLanguage(currentLang);
   restoreEmploymentSession(); // jump straight to a dashboard if already logged in - independent of crop options
 
+  // Admin is deliberately not in the nav bar - only reachable by visiting /admin
+  // directly. The backend serves this same page for that URL (see main.py);
+  // here we just notice the path and switch straight to the admin view.
+  if (window.location.pathname === "/admin") {
+    showTab("admin");
+  }
+
   const result = await safeFetch(`${API_URL}/options`);
 
   if (!result.ok) {
@@ -393,19 +400,7 @@ function restoreEmploymentSession() {
   } else {
     showEmploymentView("publicFeedView");
   }
-  loadPlatformStats();
   loadPublicFeed();
-}
-
-// Simple public count, shown above the feed - no login data exposed, just a number
-async function loadPlatformStats() {
-  const result = await safeFetch(`${API_URL}/employment/stats`);
-  const bar = document.getElementById("platformStatsBar");
-  if (!result.ok) {
-    bar.innerHTML = "";
-    return;
-  }
-  bar.innerHTML = `<div class="stat-box"><span class="stat-number">${result.data.worker_count}</span><span class="stat-label">Workers Registered</span></div>`;
 }
 
 
@@ -476,7 +471,6 @@ document.getElementById("workerRegisterForm").addEventListener("submit", async f
   showEmploymentView("workerProfileBox");
   loadMyProfile();
   loadPublicFeed(); // the new profile now appears in the feed too
-  loadPlatformStats();
 });
 
 document.getElementById("workerLoginForm").addEventListener("submit", async function (event) {
@@ -564,7 +558,6 @@ document.getElementById("deleteProfileBtn").addEventListener("click", async func
   localStorage.removeItem("workerName");
   showEmploymentView("publicFeedView");
   loadPublicFeed();
-  loadPlatformStats();
 });
 
 

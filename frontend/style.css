@@ -379,7 +379,15 @@ html[dir="rtl"] .result-box.urgent {
   display: block;
 }
 
+/* #adminDashboard needs its own explicit show/hide rule - it's not part of the
+   .emp-view group above, since Admin isn't a normal Employment-tab view. */
+#adminDashboard {
+  display: none;
+}
 
+#adminDashboard.active {
+  display: block;
+}
 
 /* ---------- The public feed itself - Instagram/Facebook-style scrollable cards ---------- */
 

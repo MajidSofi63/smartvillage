@@ -6,6 +6,7 @@
 from fastapi import FastAPI, Header, HTTPException, Depends  # web framework + auth helpers
 from fastapi.middleware.cors import CORSMiddleware  # allows cross-origin calls (harmless to keep even when same-origin)
 from fastapi.staticfiles import StaticFiles  # lets this same app serve the frontend files too
+from fastapi.responses import FileResponse  # lets us hand back index.html directly for the hidden /admin route
 from pydantic import BaseModel  # used to define what data the API expects to receive
 import os
 
@@ -250,6 +251,16 @@ def delete_my_profile(worker_id: str = Depends(get_current_worker)):
 
 
 # --- Admin panel: full visibility into every registered worker ---
+# Deliberately NOT in the main nav bar - only reachable by going directly to
+# /admin, so casual visitors never see it exists. script.js checks the URL path
+# on load and shows the admin view only when it matches.
+
+@app.get("/admin")
+def serve_admin_page():
+    # hands back the same index.html the rest of the site uses - script.js then
+    # notices the URL is /admin and switches straight to the admin view
+    return FileResponse(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "index.html"))
+
 
 @app.get("/admin/verify")
 def admin_verify(_: None = Depends(require_admin)):
