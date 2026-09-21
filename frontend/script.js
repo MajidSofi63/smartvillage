@@ -9,6 +9,25 @@
 // loaded from. This works identically on localhost and on Render - nothing to
 // edit before deploying, ever.
 const API_URL = "";
+// ================= OFFLINE SUPPORT (Service Worker) =================
+// Registers sw.js so the app shell (this page, CSS, JS) and a few key data
+// endpoints work offline - see sw.js for the actual caching strategy.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/sw.js").catch(function (error) {
+      console.log("Service worker registration failed:", error);
+    });
+  });
+}
+
+// Show the existing connection-warning banner immediately when the browser
+// itself reports no network - don't wait for a failed fetch to notice.
+window.addEventListener("offline", function () {
+  setConnectionWarning(true);
+});
+window.addEventListener("online", function () {
+  setConnectionWarning(false);
+});
 
 
 // ================= SAFE FETCH HELPER =================

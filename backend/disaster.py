@@ -5,10 +5,7 @@
 #   3. Air Pollution API    - air quality, useful for respiratory health warnings
 # All three are on OpenWeather's free tier (no credit card needed), unlike "One Call 3.0"
 # which now requires billing details even for its free quota.
-#
-# NOTE: If you'd rather not deal with OpenWeather's signup at all, Open-Meteo
-# (https://open-meteo.com) is a genuinely free alternative that needs NO API key -
-# just say the word and I'll swap this module to use it instead.
+
 
 import requests
 from config import WEATHER_API_KEY
