@@ -32,11 +32,22 @@ const CACHEABLE_API_PATHS = ["/options", "/workers", "/employment/stats"];
 
 
 // ---------- Install: pre-cache the app shell ----------
+// Uses individual cache.add() calls in a loop instead of cache.addAll(), which
+// is all-or-nothing - if even ONE file in the list fails, addAll() throws and
+// NOTHING gets cached, silently breaking offline support with no visible error.
+// This way, one bad file doesn't sink the rest.
 
 self.addEventListener("install", function (event) {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(function (cache) {
-            return cache.addAll(APP_SHELL_FILES);
+        caches.open(CACHE_NAME).then(async function (cache) {
+            for (const file of APP_SHELL_FILES) {
+                try {
+                    await cache.add(file);
+                    console.log("[SW] cached:", file);
+                } catch (error) {
+                    console.error("[SW] FAILED to cache:", file, error);
+                }
+            }
         })
     );
     self.skipWaiting(); // activate this new version immediately, don't wait for old tabs to close
