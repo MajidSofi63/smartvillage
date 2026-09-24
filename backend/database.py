@@ -1,12 +1,13 @@
 # database.py
-# Real, permanent Postgres database (hosted free on Neon) for worker profiles - this
-# is the whole "employee database" the admin panel gives you visibility into.
-# Postgres lives on Neon's own servers, completely independent of wherever the
-# backend itself happens to be hosted, so this data survives every Render redeploy.
+# Real, permanent Postgres database (hosted free on Neon) for worker profiles and
+# usage analytics. This matters because Render's free web services wipe their local
+# filesystem on every restart/redeploy - a SQLite file living there would silently
+# lose everything. Postgres lives on Neon's own servers, completely independent of
+# wherever the backend itself happens to be hosted.
 #
 # NOTE: login/accounts are handled separately by Supabase (see auth.py). This file
 # only stores the PROFILE data (name, phone, location, skills, bio) that a logged-in
-# worker fills in - which is also exactly what gets shown in the public feed.
+# worker fills in, plus lightweight usage counts for the admin panel.
 #
 # LOCAL DEVELOPMENT: create a free project at https://neon.tech, copy its connection
 # string into a local .env file as DATABASE_URL=... (copy .env.example to .env and
@@ -24,9 +25,9 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 class _ConnectionWrapper:
     """
-    A thin wrapper so the rest of the codebase (auth.py, employment.py) can keep using
-    the same simple `conn.execute(query, params).fetchone()` style that worked with
-    SQLite, without every single query call site needing to change for Postgres.
+    A thin wrapper so the rest of the codebase (auth.py, employment.py, analytics.py)
+    can keep using the same simple `conn.execute(query, params).fetchone()` style
+    that worked with SQLite, without every single query call site needing to change.
     """
 
     def __init__(self, pg_connection):
@@ -53,7 +54,7 @@ def get_connection():
 
 
 def init_db():
-    """Creates the worker_profiles table if it doesn't already exist. Safe to run on every startup."""
+    """Creates every table if it doesn't already exist. Safe to run on every startup."""
     conn = get_connection()
 
     conn.execute("""
@@ -66,13 +67,6 @@ def init_db():
             skills TEXT NOT NULL,
             bio TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL DEFAULT ''
-        )    
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS usage_events (
-            id SERIAL PRIMARY KEY,
-            event_type TEXT NOT NULL,
-            created_at TEXT NOT NULL
         )
     """)
 
@@ -82,11 +76,15 @@ def init_db():
     conn.execute("ALTER TABLE worker_profiles ADD COLUMN IF NOT EXISTS bio TEXT NOT NULL DEFAULT ''")
     conn.execute("ALTER TABLE worker_profiles ADD COLUMN IF NOT EXISTS created_at TEXT NOT NULL DEFAULT ''")
 
+    # Usage analytics - lets the admin panel show real platform activity (how many
+    # times each module has actually been used), not just who registered.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS usage_events (
+            id SERIAL PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    """)
 
     conn.commit()
     conn.close()
-
-    # NOTE: if you had employer_profiles, jobs, or applications tables from an
-    # earlier version of this project, they're no longer used and are safe to drop
-    # manually in Neon's SQL editor if you want a clean database - not required
-    # for anything to work, they're just unused leftovers otherwise.

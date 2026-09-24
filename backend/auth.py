@@ -1,14 +1,12 @@
 # auth.py
 # Uses Supabase Auth (a hosted, managed authentication service) instead of hand-rolled
 # password hashing - Supabase handles secure password storage, session tokens, and
-# account management for us. We store which role ("worker" or "employer") and basic
-# profile info as metadata on each Supabase account at signup time.
+# account management for us. We store which role ("worker") and basic profile info
+# as metadata on each Supabase account at signup time.
 #
 # ONE-TIME SUPABASE SETTING NEEDED: in your Supabase project, go to
-# Authentication -> Providers -> Email, and turn OFF "Confirm email". Without this,
-# Supabase requires clicking a confirmation link (sent to a real inbox) before an
-# account can log in - fine for a real product, but adds friction for a demo/project
-# where you're creating test accounts quickly.
+# Authentication -> Sign In / Providers, and turn OFF "Confirm email". Without this,
+# Supabase requires clicking a confirmation link before an account can log in.
 #
 # NOTE: we use EMAIL (not phone) as the login identity. Supabase's phone-based auth
 # requires a paid SMS provider (Twilio etc.) configured just to turn it on - there's
@@ -16,19 +14,25 @@
 # Phone number is still collected and stored as a separate CONTACT field on workers.
 
 import requests
-from config import SUPABASE_URL, SUPABASE_ANON_KEY
+from config import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
 
 AUTH_URL = f"{SUPABASE_URL}/auth/v1"
 HEADERS = {"apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json"}
 
+# Headers for privileged admin calls - uses the service_role key, never sent to the browser
+ADMIN_HEADERS = {
+    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+    "Content-Type": "application/json",
+}
+
 
 def sign_up(email, password, role, extra_metadata):
     """
-    Creates a Supabase account with the given role ('worker' or 'employer') and any
-    extra profile fields (name, location, skills, etc.) stored as account metadata.
-    Always returns a dict with "success": True/False, so the real reason for a
-    failure (weak password, email already used, etc.) can be shown to the person
-    instead of a generic "something went wrong".
+    Creates a Supabase account with the given role and any extra profile fields
+    stored as account metadata. If the account comes back unconfirmed, this
+    force-confirms it via the admin API and logs in immediately, so the person
+    gets a working session either way. Always returns a dict with "success".
     """
     metadata = {"role": role, **extra_metadata}
 
@@ -50,12 +54,34 @@ def sign_up(email, password, role, extra_metadata):
     token = data.get("access_token")
     user = data.get("user")
 
-    if token is None or user is None:
-        # Usually means "Confirm email" is still turned on in Supabase - see the
-        # note at the top of this file for how to turn it off.
-        return {"success": False, "message": "Account created, but no session was returned - check that 'Confirm email' is disabled in Supabase."}
+    if user is None:
+        return {"success": False, "message": "Registration failed - no user was returned."}
 
-    return {"success": True, "token": token, "id": user["id"], "metadata": user.get("user_metadata", {})}
+    if token is not None:
+        return {"success": True, "token": token, "id": user["id"], "metadata": user.get("user_metadata", {})}
+
+    # No session means the account is sitting unconfirmed - force-confirm it ourselves
+    if not _admin_confirm_user(user["id"]):
+        return {"success": False, "message": "Account created but could not be auto-confirmed. Check SUPABASE_SERVICE_ROLE_KEY is set correctly."}
+
+    login_result = log_in(email, password)
+    if not login_result["success"]:
+        return {"success": False, "message": "Account was confirmed but automatic login failed - please try logging in manually."}
+    return login_result
+
+
+def _admin_confirm_user(user_id):
+    """Uses Supabase's admin API to mark a user's email as confirmed, bypassing the need to click a link."""
+    try:
+        response = requests.put(
+            f"{AUTH_URL}/admin/users/{user_id}",
+            headers=ADMIN_HEADERS,
+            json={"email_confirm": True},
+            timeout=15,
+        )
+    except requests.exceptions.RequestException:
+        return False
+    return response.status_code == 200
 
 
 def log_in(email, password):
@@ -90,8 +116,7 @@ def _extract_error_message(response, fallback):
 def get_user_from_token(token):
     """
     Verifies a login token with Supabase and returns the full user info (id, email,
-    metadata), or None if the token is missing/invalid/expired. Used on every request
-    to a protected route to confirm who's making it.
+    metadata), or None if the token is missing/invalid/expired.
     """
     try:
         response = requests.get(

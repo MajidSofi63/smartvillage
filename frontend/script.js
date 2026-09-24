@@ -4,14 +4,10 @@
 //
 // API_URL is deliberately empty: this file is now served BY the same FastAPI app
 // it talks to (see the StaticFiles mount at the bottom of backend/main.py), so
-// every request is automatically same-origin - "" + "/options" just becomes
-// "/options", which the browser resolves against whatever URL this page was
-// loaded from. This works identically on localhost and on Render - nothing to
-// edit before deploying, ever.
+// every request is automatically same-origin.
 const API_URL = "";
-//  OFFLINE SUPPORT (Service Worker) 
-// Registers sw.js so the app shell (this page, CSS, JS) and a few key data
-// endpoints work offline - see sw.js for the actual caching strategy.
+
+// ================= OFFLINE SUPPORT (Service Worker) =================
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("/sw.js").catch(function (error) {
@@ -20,8 +16,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// Show the existing connection-warning banner immediately when the browser
-// itself reports no network - don't wait for a failed fetch to notice.
 window.addEventListener("offline", function () {
   setConnectionWarning(true);
 });
@@ -30,17 +24,13 @@ window.addEventListener("online", function () {
 });
 
 
-//  SAFE FETCH HELPER 
-// Wraps fetch() so that network failures AND backend error responses (like
-// FastAPI's 422 validation errors) both produce a clear message instead of
-// the raw response shape leaking through as "undefined" in the UI.
+// ================= SAFE FETCH HELPER =================
 
 async function safeFetch(url, options) {
   let response;
   try {
     response = await fetch(url, options);
   } catch (networkError) {
-    // the server is unreachable (not running, wrong port, no internet, etc.)
     return { ok: false, data: null, errorMessage: "Can't reach the backend. Is uvicorn running on port 8000?" };
   }
 
@@ -52,8 +42,6 @@ async function safeFetch(url, options) {
   }
 
   if (!response.ok) {
-    // FastAPI's HTTPException details are plain strings; validation errors are arrays -
-    // only JSON.stringify the array case, so plain strings don't show stray quote marks
     const detail = data && data.detail
       ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail))
       : `Server error (${response.status})`;
@@ -64,7 +52,7 @@ async function safeFetch(url, options) {
 }
 
 
-// LANGUAGE SWITCHING 
+// ================= LANGUAGE SWITCHING =================
 
 let currentLang = localStorage.getItem("smartVillageLang") || "en";
 
@@ -94,7 +82,7 @@ document.getElementById("langSwitch").addEventListener("change", function (event
 });
 
 
-// TAB SWITCHING 
+// ================= TAB SWITCHING =================
 
 const tabButtons = document.querySelectorAll(".tab-btn");
 const tabSections = document.querySelectorAll(".tab-section");
@@ -121,12 +109,12 @@ document.querySelectorAll(".card").forEach(function (card) {
 });
 
 
-//  SHARED HELPERS 
+// ================= SHARED HELPERS =================
 
 function showResult(boxId, html, style) {
   const box = document.getElementById(boxId);
   box.innerHTML = html;
-  box.className = "result-box visible " + style; // style: success / warning / error / urgent
+  box.className = "result-box visible " + style;
 }
 
 function setConnectionWarning(isDown) {
@@ -136,11 +124,11 @@ function setConnectionWarning(isDown) {
 }
 
 
-// PAGE LOAD 
+// ================= PAGE LOAD =================
 
 window.onload = async function () {
   applyLanguage(currentLang);
-  restoreEmploymentSession(); // jump straight to a dashboard if already logged in - independent of crop options
+  restoreEmploymentSession();
 
   // Admin is deliberately not in the nav bar - only reachable by visiting /admin
   // directly. The backend serves this same page for that URL (see main.py);
@@ -174,13 +162,11 @@ window.onload = async function () {
 };
 
 
-//  CROP PREDICTION 
+// ================= CROP PREDICTION =================
 
 document.getElementById("cropForm").addEventListener("submit", async function (event) {
   event.preventDefault();
 
-  // Validate numbers BEFORE sending, so a blank/invalid field never turns into
-  // a silent NaN -> null -> confusing "undefined" result.
   const rainfall = parseFloat(document.getElementById("rainfall").value);
   const pesticides = parseFloat(document.getElementById("pesticides").value);
   const temperature = parseFloat(document.getElementById("temperature").value);
@@ -196,7 +182,7 @@ document.getElementById("cropForm").addEventListener("submit", async function (e
     rainfall: rainfall,
     pesticides: pesticides,
     temperature: temperature,
-    language: currentLang, // Gemini writes the explanation directly in this language
+    language: currentLang,
   };
 
   const result = await safeFetch(`${API_URL}/predict-crop`, {
@@ -222,14 +208,14 @@ document.getElementById("cropForm").addEventListener("submit", async function (e
 });
 
 
-// TELEMEDICINE 
+// ================= TELEMEDICINE =================
 
 document.getElementById("telemedicineForm").addEventListener("submit", async function (event) {
   event.preventDefault();
 
   const requestData = {
     symptoms: document.getElementById("symptoms").value,
-    language: currentLang, // backend asks Gemini to answer directly in this language
+    language: currentLang,
   };
 
   const result = await safeFetch(`${API_URL}/telemedicine`, {
@@ -245,9 +231,6 @@ document.getElementById("telemedicineForm").addEventListener("submit", async fun
 
   const data = result.data;
   const style = data.urgent ? "urgent" : (data.condition === "Unrecognised symptoms" ? "warning" : "success");
-
-  // The safety disclaimer always comes from our own translation dictionary,
-  // never from the AI - so it's guaranteed correct no matter what Gemini returns.
   const disclaimer = translations[currentLang].teleDisclaimer;
 
   showResult(
@@ -258,7 +241,7 @@ document.getElementById("telemedicineForm").addEventListener("submit", async fun
 });
 
 
-//  GOVERNMENT SCHEMES 
+// ================= GOVERNMENT SCHEMES =================
 
 document.getElementById("schemesForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -295,7 +278,7 @@ document.getElementById("schemesForm").addEventListener("submit", async function
 });
 
 
-//  SMART WATER MANAGEMENT 
+// ================= SMART WATER MANAGEMENT =================
 
 document.getElementById("waterForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -333,7 +316,7 @@ document.getElementById("waterForm").addEventListener("submit", async function (
 });
 
 
-//  DISASTER ALERTS 
+// ================= DISASTER ALERTS =================
 
 document.getElementById("disasterForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -373,10 +356,7 @@ document.getElementById("disasterForm").addEventListener("submit", async functio
 });
 
 
-//  EMPLOYMENT: VIEW SWITCHING 
-// Employment has three "views" (public feed, worker auth, worker's own profile) -
-// only one is visible at a time. Everyone sees the public feed by default; only
-// workers log in, to post or edit their own profile.
+// ================= EMPLOYMENT: VIEW SWITCHING =================
 
 const employmentViews = ["publicFeedView", "workerAuthBox", "workerProfileBox"];
 
@@ -396,7 +376,6 @@ document.querySelectorAll(".back-btn").forEach(function (btn) {
   });
 });
 
-// Login/Register sub-tabs inside the auth box
 document.querySelectorAll(".auth-tab-btn").forEach(function (tabBtn) {
   tabBtn.addEventListener("click", function () {
     const box = tabBtn.closest(".auth-box");
@@ -407,8 +386,6 @@ document.querySelectorAll(".auth-tab-btn").forEach(function (tabBtn) {
   });
 });
 
-// On page load: if a saved login token exists, jump straight to "My Profile".
-// Otherwise show the public feed - the default, no-login-needed view.
 function restoreEmploymentSession() {
   const workerToken = localStorage.getItem("workerToken");
 
@@ -423,8 +400,7 @@ function restoreEmploymentSession() {
 }
 
 
-//  EMPLOYMENT: PUBLIC FEED 
-// This is the actual "scroll and call" feed - visible to everyone, no login needed.
+// ================= EMPLOYMENT: PUBLIC FEED =================
 
 async function loadPublicFeed() {
   const result = await safeFetch(`${API_URL}/workers`);
@@ -460,7 +436,7 @@ async function loadPublicFeed() {
 }
 
 
-//  EMPLOYMENT: WORKER AUTH 
+// ================= EMPLOYMENT: WORKER AUTH =================
 
 document.getElementById("workerRegisterForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -489,7 +465,7 @@ document.getElementById("workerRegisterForm").addEventListener("submit", async f
   document.getElementById("workerDashName").textContent = result.data.name;
   showEmploymentView("workerProfileBox");
   loadMyProfile();
-  loadPublicFeed(); // the new profile now appears in the feed too
+  loadPublicFeed();
 });
 
 document.getElementById("workerLoginForm").addEventListener("submit", async function (event) {
@@ -523,13 +499,13 @@ document.getElementById("workerLogoutBtn").addEventListener("click", function ()
 });
 
 
-//  EMPLOYMENT: MY PROFILE (edit / delete) 
+// ================= EMPLOYMENT: MY PROFILE (edit / delete) =================
 
 async function loadMyProfile() {
   const token = localStorage.getItem("workerToken");
   const result = await safeFetch(`${API_URL}/worker/profile`, { headers: { "X-Auth-Token": token } });
 
-  if (!result.ok) return; // token expired or similar - form just stays empty, no crash
+  if (!result.ok) return;
 
   const profile = result.data.profile;
   document.getElementById("workerEditName").value = profile.name;
@@ -580,11 +556,7 @@ document.getElementById("deleteProfileBtn").addEventListener("click", async func
 });
 
 
-//  ADMIN PANEL 
-// The admin password is kept only in this variable (never localStorage) - closing
-// the tab or refreshing requires logging in again, which is the right trade-off
-// for something this sensitive. This is the site owner's view into the same
-// worker database the public feed reads from, plus contact emails and delete controls.
+// ================= ADMIN PANEL =================
 
 let adminPassword = null;
 
@@ -616,6 +588,8 @@ document.getElementById("adminLogoutBtn").addEventListener("click", function () 
 
 async function loadAdminDashboard() {
   const headers = { "X-Admin-Password": adminPassword };
+
+  // ---- Registered worker count + list ----
   const result = await safeFetch(`${API_URL}/admin/workers`, { headers });
 
   document.getElementById("adminStatsBar").innerHTML =
@@ -647,10 +621,27 @@ async function loadAdminDashboard() {
   } else {
     workersList.innerHTML = "<p>No workers registered yet.</p>";
   }
+
+  // ---- Platform activity (real usage counts, not just who registered) ----
+  const activityResult = await safeFetch(`${API_URL}/admin/activity`, { headers });
+  const activityLabels = {
+    crop_prediction: "Crop Predictions", telemedicine_query: "Telemedicine Queries",
+    scheme_check: "Scheme Checks", water_check: "Water Checks",
+    disaster_check: "Disaster Checks", chat_message: "Chat Messages",
+  };
+  const activityBar = document.getElementById("adminActivityBar");
+  if (activityResult.ok) {
+    const activity = activityResult.data.activity;
+    activityBar.innerHTML = Object.keys(activityLabels).map(function (key) {
+      return `<div class="stat-box"><span class="stat-number">${activity[key] || 0}</span><span class="stat-label">${activityLabels[key]}</span></div>`;
+    }).join("");
+  } else {
+    activityBar.innerHTML = "";
+  }
 }
 
 
-//  FLOATING ASSISTANT WIDGET 
+// ================= FLOATING ASSISTANT WIDGET =================
 
 const chatBubble = document.getElementById("chatBubble");
 const chatPanel = document.getElementById("chatPanel");

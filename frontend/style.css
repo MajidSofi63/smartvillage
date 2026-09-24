@@ -92,7 +92,6 @@ header h1 {
 }
 
 /* ---------- Connection warning banner ---------- */
-/* Shown only when the backend can't be reached, so failures are never silent */
 
 .connection-warning {
   display: none;
@@ -220,6 +219,15 @@ textarea {
   width: 100%;
 }
 
+/* Browsers default placeholder text to a low-contrast gray - this was never
+   explicitly styled, which is the real accessibility contrast gap (the nav
+   tabs, checked properly against WCAG math, already pass AA at 6.56:1). */
+input::placeholder,
+textarea::placeholder {
+  color: var(--brown);
+  opacity: 0.75;
+}
+
 textarea {
   resize: vertical;
 }
@@ -269,8 +277,6 @@ button:hover {
   border-left: 4px solid var(--red);
   background: #fdf2f0;
 }
-
-/* stands out from normal results */
 
 html[dir="rtl"] .result-box.success,
 html[dir="rtl"] .result-box.warning,
@@ -324,7 +330,6 @@ html[dir="rtl"] .result-box.urgent {
   background: var(--green-dark);
   color: var(--paper);
   margin-left: auto;
-  /* pushes the user's messages to the right */
 }
 
 .chat-message.assistant {
@@ -370,7 +375,6 @@ html[dir="rtl"] .result-box.urgent {
   white-space: nowrap;
 }
 
-/* Every employment "view" (feed / auth / profile) shares this - only one shows at a time */
 .emp-view {
   display: none;
 }
@@ -414,7 +418,6 @@ html[dir="rtl"] .result-box.urgent {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  /* the other deliberate circle in this design, alongside the chat bubble - avatars read as circles everywhere */
   background: var(--green-dark);
   color: var(--paper);
   display: flex;
@@ -549,8 +552,6 @@ html[dir="rtl"] .result-box.urgent {
   gap: 10px;
 }
 
-/* Secondary (outline) and danger (red) button variants, so Delete/Withdraw don't
-   look identical to the primary action on the same card. */
 .btn-secondary {
   background: white !important;
   color: var(--green-dark) !important;
@@ -601,8 +602,6 @@ html[dir="rtl"] .result-box.urgent {
 }
 
 /* ---------- Admin panel rows ---------- */
-/* Compact, table-like rows - the admin list can get long, so this stays denser
-   than the worker-post style used in the feed. */
 
 .admin-row {
   display: flex;
@@ -634,8 +633,6 @@ html[dir="rtl"] .result-box.urgent {
 }
 
 /* ---------- Floating Assistant Widget ---------- */
-/* Fixed bottom-right bubble + panel, same pattern as Intercom/WhatsApp-style
-   chat widgets - stays visible and accessible on every tab. */
 
 #chatBubble {
   position: fixed;
@@ -644,7 +641,6 @@ html[dir="rtl"] .result-box.urgent {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  /* the one deliberate circle in this design - a chat bubble reads as one everywhere */
   background: var(--green-dark);
   color: var(--paper);
   border: none;
@@ -665,7 +661,6 @@ html[dir="rtl"] #chatBubble {
 
 #chatPanel {
   display: none;
-  /* toggled open/closed by script.js */
   position: fixed;
   bottom: 90px;
   right: 24px;

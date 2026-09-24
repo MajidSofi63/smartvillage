@@ -1,21 +1,9 @@
-// translations.js
-// Holds the English/Hindi/Urdu text for every static label in the UI.
-// Only the UI "chrome" (labels, headings, buttons) is translated here - results
-// coming back from the backend (advice, scheme names, etc.) stay in English for
-// now, since translating those live would need another API call to Gemini.
-
 const translations = {
-
   en: {
     appTitle: "🌾 AI Smart Village Platform",
     navDashboard: "Dashboard", navCrop: "Crop Prediction", navTele: "Telemedicine",
     navSchemes: "Govt. Schemes", navWater: "Water Management", navDisaster: "Disaster Alerts",
-    navEmployment: "Employment", navAssistant: "Assistant", navAdmin: "Admin",
-
-    adminHeading: "Admin Panel", adminDesc: "Full visibility into everyone using the platform.",
-    labelAdminPassword: "Admin Password",
-    adminWorkersTitle: "Registered Workers", adminEmployersTitle: "Registered Employers",
-    adminJobsTitle: "All Job Postings", adminApplicationsTitle: "All Applications",
+    navEmployment: "Employment", navAssistant: "Assistant",
 
     dashHeading: "Welcome",
     dashIntro: "A single platform that brings together crop prediction, telemedicine, government scheme discovery, water management, disaster alerts, and employment matching for rural communities.",
@@ -24,7 +12,7 @@ const translations = {
     cardSchemesTitle: "🏛️ Govt. Schemes", cardSchemesDesc: "Find welfare schemes you're eligible for.",
     cardWaterTitle: "💧 Water Management", cardWaterDesc: "Check soil moisture and reservoir levels.",
     cardDisasterTitle: "⛈️ Disaster Alerts", cardDisasterDesc: "Live weather-based warnings for your area.",
-    cardEmploymentTitle: "💼 Employment", cardEmploymentDesc: "Find local jobs that match your skills.",
+    cardEmploymentTitle: "💼 Employment", cardEmploymentDesc: "Browse local workers, or register if you're looking for work.",
 
     cropHeading: "Crop Yield Prediction",
     cropDesc: "Predicts upcoming yield based on current conditions (not past years).",
@@ -51,20 +39,19 @@ const translations = {
     disasterDesc: "Live weather, forecast, and air quality via OpenWeather, checked against disaster risk rules.",
     labelCity: "Your City/Town", btnCheckWeather: "Check Weather Alerts",
 
-    employmentHeading: "Employment Matching",
-    employmentDesc: "A real job board: log in as a worker or an employer.",
-    iAmWorker: "I'm Looking for Work", iAmEmployer: "I'm Hiring",
-    iAmWorkerDesc: "Register your skills and apply to local jobs",
-    iAmEmployerDesc: "Post an opening and find local workers",
-    btnLogin: "Login", btnRegister: "Register", labelPassword: "Password", btnBack: "← Back",
+    employmentHeading: "Find Local Workers",
+    employmentDesc: "Browse profiles below and call directly - no signup needed to look.",
+    lookingForWorkBtn: "Looking for Work? Register/Login",
+    btnLogin: "Login", btnRegister: "Register", labelPassword: "Password", btnBack: "← Back to Feed",
     welcomeText: "Welcome,", btnLogout: "Logout",
     labelName: "Your Name", labelEmail: "Email", labelPhone: "Phone Number", labelLocation: "Location",
-    btnDelete: "Delete", btnWithdraw: "Withdraw",
-    labelSkills: "Your Skills",
-    availableJobsTitle: "Available Jobs", myApplicationsTitle: "My Applications",
-    labelJobTitle: "Job Title", labelRequiredSkills: "Required Skills",
-    labelJobType: "Type", labelContact: "Contact Info",
-    postJobTitle: "Post a New Job", btnPostJob: "Post Job", myJobsTitle: "My Posted Jobs",
+    labelSkills: "Your Skills", labelBio: "Short Intro",
+    myProfileTitle: "My Profile", myProfileDesc: "This is exactly what shows up in the public feed.",
+    btnSaveChanges: "Save Changes", btnDeleteProfile: "Delete My Profile",
+
+    adminHeading: "Admin Panel", adminDesc: "Your view into the worker database - see and moderate every registered profile.",
+    labelAdminPassword: "Admin Password",
+    adminWorkersTitle: "Registered Workers", adminActivityTitle: "Platform Activity",
 
     assistantHeading: "Ask the Assistant",
     assistantDesc: "Ask anything about the platform in plain language - it will guide you to the right tool.",
@@ -76,12 +63,7 @@ const translations = {
     appTitle: "🌾 एआई स्मार्ट विलेज प्लेटफॉर्म",
     navDashboard: "डैशबोर्ड", navCrop: "फसल भविष्यवाणी", navTele: "टेलीमेडिसिन",
     navSchemes: "सरकारी योजनाएं", navWater: "जल प्रबंधन", navDisaster: "आपदा चेतावनी",
-    navEmployment: "रोजगार", navAssistant: "सहायक", navAdmin: "एडमिन",
-
-    adminHeading: "एडमिन पैनल", adminDesc: "प्लेटफॉर्म का उपयोग करने वाले सभी लोगों की पूरी जानकारी।",
-    labelAdminPassword: "एडमिन पासवर्ड",
-    adminWorkersTitle: "पंजीकृत कर्मचारी", adminEmployersTitle: "पंजीकृत नियोक्ता",
-    adminJobsTitle: "सभी नौकरी पोस्टिंग", adminApplicationsTitle: "सभी आवेदन",
+    navEmployment: "रोजगार", navAssistant: "सहायक",
 
     dashHeading: "स्वागत है",
     dashIntro: "एक ही मंच जो ग्रामीण समुदायों के लिए फसल भविष्यवाणी, टेलीमेडिसिन, सरकारी योजना खोज, जल प्रबंधन, आपदा चेतावनी और रोजगार मिलान को एक साथ लाता है।",
@@ -90,7 +72,7 @@ const translations = {
     cardSchemesTitle: "🏛️ सरकारी योजनाएं", cardSchemesDesc: "उन कल्याणकारी योजनाओं को खोजें जिनके आप पात्र हैं।",
     cardWaterTitle: "💧 जल प्रबंधन", cardWaterDesc: "मिट्टी की नमी और जलाशय के स्तर की जांच करें।",
     cardDisasterTitle: "⛈️ आपदा चेतावनी", cardDisasterDesc: "आपके क्षेत्र के लिए लाइव मौसम आधारित चेतावनी।",
-    cardEmploymentTitle: "💼 रोजगार", cardEmploymentDesc: "अपने कौशल से मेल खाने वाली स्थानीय नौकरियां खोजें।",
+    cardEmploymentTitle: "💼 रोजगार", cardEmploymentDesc: "स्थानीय कर्मचारियों को ब्राउज़ करें, या काम चाहिए तो पंजीकरण करें।",
 
     cropHeading: "फसल उपज भविष्यवाणी",
     cropDesc: "वर्तमान परिस्थितियों के आधार पर आगामी उपज का अनुमान (पिछले वर्षों का नहीं)।",
@@ -117,20 +99,19 @@ const translations = {
     disasterDesc: "OpenWeather के माध्यम से लाइव मौसम, पूर्वानुमान और वायु गुणवत्ता, आपदा जोखिम नियमों के विरुद्ध जांची गई।",
     labelCity: "आपका शहर/कस्बा", btnCheckWeather: "मौसम चेतावनी जांचें",
 
-    employmentHeading: "रोजगार मिलान",
-    employmentDesc: "एक वास्तविक जॉब बोर्ड: कर्मचारी या नियोक्ता के रूप में लॉगिन करें।",
-    iAmWorker: "मुझे काम चाहिए", iAmEmployer: "मुझे भर्ती करनी है",
-    iAmWorkerDesc: "अपने कौशल पंजीकृत करें और स्थानीय नौकरियों के लिए आवेदन करें",
-    iAmEmployerDesc: "एक अवसर पोस्ट करें और स्थानीय कर्मचारी खोजें",
-    btnLogin: "लॉगिन", btnRegister: "पंजीकरण करें", labelPassword: "पासवर्ड", btnBack: "← वापस",
+    employmentHeading: "स्थानीय कर्मचारी खोजें",
+    employmentDesc: "नीचे प्रोफाइल ब्राउज़ करें और सीधे कॉल करें - देखने के लिए साइनअप की जरूरत नहीं।",
+    lookingForWorkBtn: "काम चाहिए? पंजीकरण/लॉगिन करें",
+    btnLogin: "लॉगिन", btnRegister: "पंजीकरण करें", labelPassword: "पासवर्ड", btnBack: "← फीड पर वापस",
     welcomeText: "स्वागत है,", btnLogout: "लॉगआउट",
     labelName: "आपका नाम", labelEmail: "ईमेल", labelPhone: "फ़ोन नंबर", labelLocation: "स्थान",
-    btnDelete: "हटाएं", btnWithdraw: "वापस लें",
-    labelSkills: "आपके कौशल",
-    availableJobsTitle: "उपलब्ध नौकरियां", myApplicationsTitle: "मेरे आवेदन",
-    labelJobTitle: "नौकरी का शीर्षक", labelRequiredSkills: "आवश्यक कौशल",
-    labelJobType: "प्रकार", labelContact: "संपर्क जानकारी",
-    postJobTitle: "नई नौकरी पोस्ट करें", btnPostJob: "नौकरी पोस्ट करें", myJobsTitle: "मेरी पोस्ट की गई नौकरियां",
+    labelSkills: "आपके कौशल", labelBio: "संक्षिप्त परिचय",
+    myProfileTitle: "मेरी प्रोफ़ाइल", myProfileDesc: "यह बिल्कुल वही है जो सार्वजनिक फ़ीड में दिखाई देता है।",
+    btnSaveChanges: "परिवर्तन सहेजें", btnDeleteProfile: "मेरी प्रोफ़ाइल हटाएं",
+
+    adminHeading: "एडमिन पैनल", adminDesc: "प्लेटफॉर्म का उपयोग करने वाले सभी लोगों की पूरी जानकारी।",
+    labelAdminPassword: "एडमिन पासवर्ड",
+    adminWorkersTitle: "पंजीकृत कर्मचारी", adminActivityTitle: "प्लेटफ़ॉर्म गतिविधि",
 
     assistantHeading: "सहायक से पूछें",
     assistantDesc: "प्लेटफॉर्म के बारे में सरल भाषा में कुछ भी पूछें - यह आपको सही उपकरण तक मार्गदर्शन करेगा।",
@@ -142,12 +123,7 @@ const translations = {
     appTitle: "🌾 اے آئی اسمارٹ ولیج پلیٹ فارم",
     navDashboard: "ڈیش بورڈ", navCrop: "فصل کی پیشگوئی", navTele: "ٹیلی میڈیسن",
     navSchemes: "سرکاری اسکیمیں", navWater: "پانی کا انتظام", navDisaster: "آفت کی وارننگ",
-    navEmployment: "روزگار", navAssistant: "معاون", navAdmin: "ایڈمن",
-
-    adminHeading: "ایڈمن پینل", adminDesc: "پلیٹ فارم استعمال کرنے والے سب کی مکمل معلومات۔",
-    labelAdminPassword: "ایڈمن پاس ورڈ",
-    adminWorkersTitle: "رجسٹرڈ کارکن", adminEmployersTitle: "رجسٹرڈ آجر",
-    adminJobsTitle: "تمام نوکری کی پوسٹنگ", adminApplicationsTitle: "تمام درخواستیں",
+    navEmployment: "روزگار", navAssistant: "معاون",
 
     dashHeading: "خوش آمدید",
     dashIntro: "ایک ہی پلیٹ فارم جو دیہی برادریوں کے لیے فصل کی پیشگوئی، ٹیلی میڈیسن، سرکاری اسکیم کی تلاش، پانی کا انتظام، آفت کی وارننگ اور روزگار کی تلاش کو ایک ساتھ لاتا ہے۔",
@@ -156,7 +132,7 @@ const translations = {
     cardSchemesTitle: "🏛️ سرکاری اسکیمیں", cardSchemesDesc: "وہ فلاحی اسکیمیں تلاش کریں جن کے آپ اہل ہیں۔",
     cardWaterTitle: "💧 پانی کا انتظام", cardWaterDesc: "مٹی کی نمی اور ذخائر کی سطح چیک کریں۔",
     cardDisasterTitle: "⛈️ آفت کی وارننگ", cardDisasterDesc: "آپ کے علاقے کے لیے لائیو موسمی وارننگز۔",
-    cardEmploymentTitle: "💼 روزگار", cardEmploymentDesc: "اپنی مہارتوں سے میل کھاتی مقامی نوکریاں تلاش کریں۔",
+    cardEmploymentTitle: "💼 روزگار", cardEmploymentDesc: "مقامی کارکنوں کو دیکھیں، یا کام چاہیے تو رجسٹر کریں۔",
 
     cropHeading: "فصل کی پیداوار کی پیشگوئی",
     cropDesc: "موجودہ حالات کی بنیاد پر آئندہ پیداوار کا اندازہ (ماضی کے سالوں کا نہیں)۔",
@@ -183,20 +159,19 @@ const translations = {
     disasterDesc: "OpenWeather کے ذریعے لائیو موسم، پیشگوئی اور ہوا کا معیار، آفت کے خطرے کے اصولوں کے خلاف جانچا گیا۔",
     labelCity: "آپ کا شہر/قصبہ", btnCheckWeather: "موسمی وارننگز چیک کریں",
 
-    employmentHeading: "روزگار میچنگ",
-    employmentDesc: "ایک حقیقی جاب بورڈ: کارکن یا آجر کے طور پر لاگ ان کریں۔",
-    iAmWorker: "مجھے کام چاہیے", iAmEmployer: "مجھے بھرتی کرنی ہے",
-    iAmWorkerDesc: "اپنی مہارتیں رجسٹر کریں اور مقامی نوکریوں کے لیے درخواست دیں",
-    iAmEmployerDesc: "ایک آسامی پوسٹ کریں اور مقامی کارکن تلاش کریں",
-    btnLogin: "لاگ ان", btnRegister: "رجسٹر کریں", labelPassword: "پاس ورڈ", btnBack: "← واپس",
+    employmentHeading: "مقامی کارکن تلاش کریں",
+    employmentDesc: "نیچے پروفائلز دیکھیں اور براہ راست کال کریں - دیکھنے کے لیے سائن اپ کی ضرورت نہیں۔",
+    lookingForWorkBtn: "کام چاہیے؟ رجسٹر/لاگ ان کریں",
+    btnLogin: "لاگ ان", btnRegister: "رجسٹر کریں", labelPassword: "پاس ورڈ", btnBack: "← فیڈ پر واپس",
     welcomeText: "خوش آمدید,", btnLogout: "لاگ آؤٹ",
     labelName: "آپ کا نام", labelEmail: "ای میل", labelPhone: "فون نمبر", labelLocation: "مقام",
-    btnDelete: "حذف کریں", btnWithdraw: "واپس لیں",
-    labelSkills: "آپ کی مہارتیں",
-    availableJobsTitle: "دستیاب نوکریاں", myApplicationsTitle: "میری درخواستیں",
-    labelJobTitle: "نوکری کا عنوان", labelRequiredSkills: "مطلوبہ مہارتیں",
-    labelJobType: "قسم", labelContact: "رابطہ کی معلومات",
-    postJobTitle: "نئی نوکری پوسٹ کریں", btnPostJob: "نوکری پوسٹ کریں", myJobsTitle: "میری پوسٹ کردہ نوکریاں",
+    labelSkills: "آپ کی مہارتیں", labelBio: "مختصر تعارف",
+    myProfileTitle: "میری پروفائل", myProfileDesc: "یہ بالکل وہی ہے جو عوامی فیڈ میں دکھایا جاتا ہے۔",
+    btnSaveChanges: "تبدیلیاں محفوظ کریں", btnDeleteProfile: "میری پروفائل حذف کریں",
+
+    adminHeading: "ایڈمن پینل", adminDesc: "پلیٹ فارم استعمال کرنے والے سب کی مکمل معلومات۔",
+    labelAdminPassword: "ایڈمن پاس ورڈ",
+    adminWorkersTitle: "رجسٹرڈ کارکن", adminActivityTitle: "پلیٹ فارم کی سرگرمی",
 
     assistantHeading: "معاون سے پوچھیں",
     assistantDesc: "پلیٹ فارم کے بارے میں آسان زبان میں کچھ بھی پوچھیں - یہ آپ کو صحیح ٹول تک رہنمائی کرے گا۔",

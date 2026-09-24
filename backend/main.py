@@ -7,10 +7,8 @@ from fastapi import FastAPI, Header, HTTPException, Depends  # web framework + a
 from fastapi.middleware.cors import CORSMiddleware  # allows cross-origin calls (harmless to keep even when same-origin)
 from fastapi.staticfiles import StaticFiles  # lets this same app serve the frontend files too
 from fastapi.responses import FileResponse  # lets us hand back index.html directly for the hidden /admin route
-import analytics
-from pydantic import BaseModel, EmailStr, field_validator  # used to define what data the API expects to receive
+from pydantic import BaseModel, EmailStr, field_validator  # request validation, including real email format checking
 import os
-
 
 # our own modules, one per platform feature
 import crop_model
@@ -22,6 +20,7 @@ import employment
 import gemini
 import database
 import auth
+import analytics
 from config import ADMIN_PASSWORD
 
 app = FastAPI(title="AI Smart Village Platform")
@@ -40,7 +39,7 @@ def startup():
     database.init_db()
 
 
-# Auth dependencies
+# ---------- Auth dependencies ----------
 
 def get_current_worker(x_auth_token: str = Header(...)):
     """
@@ -65,7 +64,7 @@ def require_admin(x_admin_password: str = Header(...)):
         raise HTTPException(status_code=401, detail="Incorrect admin password.")
 
 
-# Request data shapes (what the frontend must send us)
+# ---------- Request data shapes (what the frontend must send us) ----------
 
 class CropRequest(BaseModel):
     area: str
@@ -98,12 +97,27 @@ class WeatherRequest(BaseModel):
 
 class WorkerRegisterRequest(BaseModel):
     name: str
-    email: str       # used to log in
+    email: EmailStr  # validates real email format, not just any string
     phone: str       # shown publicly in the feed so people can call directly
     location: str
     skills: str      # comma-separated, e.g. "farming, driving"
     bio: str = ""    # short intro, like a social post caption
     password: str
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v):
+        cleaned = v.replace(" ", "").replace("-", "")
+        if not cleaned.replace("+", "", 1).isdigit() or len(cleaned) < 7:
+            raise ValueError("Phone number looks invalid - please include enough digits.")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters.")
+        return v
 
 
 class WorkerUpdateRequest(BaseModel):
@@ -115,7 +129,7 @@ class WorkerUpdateRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
@@ -123,9 +137,9 @@ class ChatRequest(BaseModel):
     message: str
 
 
-# Routes
+# ---------- Routes ----------
 
-# Crop Prediction (number from the ML model, explanation from Gemini)
+# --- Crop Prediction (number from the ML model, explanation from Gemini) ---
 
 @app.get("/options")
 def get_options():
@@ -153,10 +167,11 @@ def predict_crop(request: CropRequest):
         predicted_yield=predicted, language_code=request.language,
     )
 
+    analytics.log_event("crop_prediction")
     return {"success": True, "predicted_yield_hg_per_ha": predicted, "explanation": explanation}
 
 
-# Telemedicine
+# --- Telemedicine ---
 
 @app.post("/telemedicine")
 def check_symptoms(request: SymptomRequest):
@@ -166,6 +181,7 @@ def check_symptoms(request: SymptomRequest):
         local_advice=local_result["advice"], urgent=local_result["urgent"],
         language_code=request.language,
     )
+    analytics.log_event("telemedicine_query")
     return {
         "success": True,
         "condition": local_result["condition"],
@@ -174,29 +190,34 @@ def check_symptoms(request: SymptomRequest):
     }
 
 
-# Government Schemes
+# --- Government Schemes ---
 
 @app.post("/schemes")
 def get_schemes(request: SchemeRequest):
     result = schemes.find_eligible_schemes(request.age, request.annual_income, request.owns_land, request.category)
+    analytics.log_event("scheme_check")
     return {"success": True, "eligible_schemes": result}
 
 
-# Smart Water Management
+# --- Smart Water Management ---
 
 @app.post("/water")
 def water_status(request: WaterRequest):
-    return water.get_water_status(request.city)
+    result = water.get_water_status(request.city)
+    analytics.log_event("water_check")
+    return result
 
 
-# Disaster Alerts
+# --- Disaster Alerts ---
 
 @app.post("/disaster")
 def disaster_alert(request: WeatherRequest):
-    return disaster.get_weather_alert(request.city)
+    result = disaster.get_weather_alert(request.city)
+    analytics.log_event("disaster_check")
+    return result
 
 
-# Employment: public feed (no login needed to browse)
+# --- Employment: public feed (no login needed to browse) ---
 
 @app.get("/workers")
 def get_public_feed():
@@ -208,7 +229,7 @@ def employment_public_stats():
     return {"success": True, **employment.get_public_stats()}
 
 
-# Employment: worker accounts
+# --- Employment: worker accounts ---
 
 @app.post("/auth/register-worker")
 def register_worker(request: WorkerRegisterRequest):
@@ -252,7 +273,7 @@ def delete_my_profile(worker_id: str = Depends(get_current_worker)):
     return {"success": True, "message": "Profile removed from the feed."}
 
 
-# Admin panel: full visibility into every registered worker
+# --- Admin panel: full visibility into every registered worker + platform activity ---
 # Deliberately NOT in the main nav bar - only reachable by going directly to
 # /admin, so casual visitors never see it exists. script.js checks the URL path
 # on load and shows the admin view only when it matches.
@@ -280,15 +301,24 @@ def admin_remove_worker(worker_id: str, _: None = Depends(require_admin)):
     return {"success": True, "message": "Worker profile removed."}
 
 
-# Conversational Assistant (Gemini)
+@app.get("/admin/activity")
+def admin_get_activity(_: None = Depends(require_admin)):
+    # real platform usage counts - the piece that was missing before: previously
+    # the admin panel could only show WHO registered, never whether the platform
+    # was actually being used
+    return {"success": True, "activity": analytics.get_usage_counts()}
+
+
+# --- Conversational Assistant (Gemini) ---
 
 @app.post("/chat")
 def chat_with_assistant(request: ChatRequest):
     reply = gemini.ask_gemini(request.message)
+    analytics.log_event("chat_message")
     return {"success": True, "reply": reply}
 
 
-# Serve the frontend
+# ---------- Serve the frontend ----------
 # This MUST be the last thing registered - it's mounted at "/" and would otherwise
 # swallow every API route above it if it came first.
 
