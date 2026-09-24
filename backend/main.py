@@ -7,8 +7,10 @@ from fastapi import FastAPI, Header, HTTPException, Depends  # web framework + a
 from fastapi.middleware.cors import CORSMiddleware  # allows cross-origin calls (harmless to keep even when same-origin)
 from fastapi.staticfiles import StaticFiles  # lets this same app serve the frontend files too
 from fastapi.responses import FileResponse  # lets us hand back index.html directly for the hidden /admin route
-from pydantic import BaseModel  # used to define what data the API expects to receive
+import analytics
+from pydantic import BaseModel, EmailStr, field_validator  # used to define what data the API expects to receive
 import os
+
 
 # our own modules, one per platform feature
 import crop_model
@@ -38,7 +40,7 @@ def startup():
     database.init_db()
 
 
-# ---------- Auth dependencies ----------
+# Auth dependencies
 
 def get_current_worker(x_auth_token: str = Header(...)):
     """
@@ -63,7 +65,7 @@ def require_admin(x_admin_password: str = Header(...)):
         raise HTTPException(status_code=401, detail="Incorrect admin password.")
 
 
-# ---------- Request data shapes (what the frontend must send us) ----------
+# Request data shapes (what the frontend must send us)
 
 class CropRequest(BaseModel):
     area: str
@@ -121,9 +123,9 @@ class ChatRequest(BaseModel):
     message: str
 
 
-# ---------- Routes ----------
+# Routes
 
-# --- Crop Prediction (number from the ML model, explanation from Gemini) ---
+# Crop Prediction (number from the ML model, explanation from Gemini)
 
 @app.get("/options")
 def get_options():
@@ -154,7 +156,7 @@ def predict_crop(request: CropRequest):
     return {"success": True, "predicted_yield_hg_per_ha": predicted, "explanation": explanation}
 
 
-# --- Telemedicine ---
+# Telemedicine
 
 @app.post("/telemedicine")
 def check_symptoms(request: SymptomRequest):
@@ -172,7 +174,7 @@ def check_symptoms(request: SymptomRequest):
     }
 
 
-# --- Government Schemes ---
+# Government Schemes
 
 @app.post("/schemes")
 def get_schemes(request: SchemeRequest):
@@ -180,21 +182,21 @@ def get_schemes(request: SchemeRequest):
     return {"success": True, "eligible_schemes": result}
 
 
-# --- Smart Water Management ---
+# Smart Water Management
 
 @app.post("/water")
 def water_status(request: WaterRequest):
     return water.get_water_status(request.city)
 
 
-# --- Disaster Alerts ---
+# Disaster Alerts
 
 @app.post("/disaster")
 def disaster_alert(request: WeatherRequest):
     return disaster.get_weather_alert(request.city)
 
 
-# --- Employment: public feed (no login needed to browse) ---
+# Employment: public feed (no login needed to browse)
 
 @app.get("/workers")
 def get_public_feed():
@@ -206,7 +208,7 @@ def employment_public_stats():
     return {"success": True, **employment.get_public_stats()}
 
 
-# --- Employment: worker accounts ---
+# Employment: worker accounts
 
 @app.post("/auth/register-worker")
 def register_worker(request: WorkerRegisterRequest):
@@ -250,7 +252,7 @@ def delete_my_profile(worker_id: str = Depends(get_current_worker)):
     return {"success": True, "message": "Profile removed from the feed."}
 
 
-# --- Admin panel: full visibility into every registered worker ---
+# Admin panel: full visibility into every registered worker
 # Deliberately NOT in the main nav bar - only reachable by going directly to
 # /admin, so casual visitors never see it exists. script.js checks the URL path
 # on load and shows the admin view only when it matches.
@@ -278,7 +280,7 @@ def admin_remove_worker(worker_id: str, _: None = Depends(require_admin)):
     return {"success": True, "message": "Worker profile removed."}
 
 
-# --- Conversational Assistant (Gemini) ---
+# Conversational Assistant (Gemini)
 
 @app.post("/chat")
 def chat_with_assistant(request: ChatRequest):
@@ -286,7 +288,7 @@ def chat_with_assistant(request: ChatRequest):
     return {"success": True, "reply": reply}
 
 
-# ---------- Serve the frontend ----------
+# Serve the frontend
 # This MUST be the last thing registered - it's mounted at "/" and would otherwise
 # swallow every API route above it if it came first.
 

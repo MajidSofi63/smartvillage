@@ -57,8 +57,7 @@ def ask_gemini(user_message):
     """Used by the floating chat assistant."""
     reply = _call_gemini(SYSTEM_CONTEXT + "\n\nUser question: " + user_message)
     if reply is None:
-        return ("Sorry, the assistant isn't available right now. Check the terminal running "
-                "uvicorn for the exact error, and confirm your Gemini API key in config.py.")
+        return ("Sorry, the assistant isn't available right now.")
     return reply
 
 

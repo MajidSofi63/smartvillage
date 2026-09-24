@@ -31,7 +31,7 @@ const APP_SHELL_FILES = [
 const CACHEABLE_API_PATHS = ["/options", "/workers", "/employment/stats"];
 
 
-// ---------- Install: pre-cache the app shell ----------
+//  Install: pre-cache the app shell 
 // Uses individual cache.add() calls in a loop instead of cache.addAll(), which
 // is all-or-nothing - if even ONE file in the list fails, addAll() throws and
 // NOTHING gets cached, silently breaking offline support with no visible error.
@@ -54,7 +54,7 @@ self.addEventListener("install", function (event) {
 });
 
 
-// ---------- Activate: clean up any old-versioned caches ----------
+//  Activate: clean up any old-versioned caches 
 
 self.addEventListener("activate", function (event) {
     event.waitUntil(
@@ -70,7 +70,7 @@ self.addEventListener("activate", function (event) {
 });
 
 
-// ---------- Fetch: decide how to answer each request ----------
+//  Fetch: decide how to answer each request 
 
 self.addEventListener("fetch", function (event) {
     const request = event.request;

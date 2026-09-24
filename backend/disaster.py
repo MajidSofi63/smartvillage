@@ -19,7 +19,7 @@ def get_weather_alert(city_name):
     then applies rule-based thresholds to generate disaster/health alerts.
     """
 
-    # ---- 1. Current weather (also gives us lat/lon for the air quality call) ----
+    # 1. Current weather (also gives us lat/lon for the air quality call)
     current_url = f"{BASE_URL}/weather?q={city_name}&appid={WEATHER_API_KEY}&units=metric"
     try:
         current_response = requests.get(current_url, timeout=10)
@@ -41,7 +41,7 @@ def get_weather_alert(city_name):
 
     alerts = []
 
-    # ---- Current-condition rules ----
+    #  Current-condition rules 
     if rain_now > 10:
         alerts.append("Heavy rainfall right now - risk of flooding in low-lying areas.")
     if condition == "Thunderstorm":
@@ -53,7 +53,7 @@ def get_weather_alert(city_name):
     if humidity < 20 and temperature > 30:
         alerts.append("Very dry and hot conditions - elevated drought/wildfire risk.")
 
-    # ---- 2. 5-day / 3-hour forecast (gives lead time, matching your synopsis's 3-5 day target) ----
+    # 2. 5-day / 3-hour forecast (gives lead time, matching your synopsis's 3-5 day target)
     forecast_url = f"{BASE_URL}/forecast?q={city_name}&appid={WEATHER_API_KEY}&units=metric"
     try:
         forecast_response = requests.get(forecast_url, timeout=10)
@@ -76,7 +76,7 @@ def get_weather_alert(city_name):
         if max_temp_next_3days > 42:
             alerts.append("Extreme heat expected in the coming days - plan outdoor work for early morning/evening.")
 
-    # ---- 3. Air quality (uses lat/lon from the current-weather call) ----
+    # 3. Air quality (uses lat/lon from the current-weather call)
     air_url = f"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}"
     try:
         air_response = requests.get(air_url, timeout=10)

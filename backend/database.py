@@ -66,6 +66,13 @@ def init_db():
             skills TEXT NOT NULL,
             bio TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL DEFAULT ''
+        )    
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS usage_events (
+            id SERIAL PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            created_at TEXT NOT NULL
         )
     """)
 
@@ -74,6 +81,7 @@ def init_db():
     conn.execute("ALTER TABLE worker_profiles ADD COLUMN IF NOT EXISTS email TEXT NOT NULL DEFAULT ''")
     conn.execute("ALTER TABLE worker_profiles ADD COLUMN IF NOT EXISTS bio TEXT NOT NULL DEFAULT ''")
     conn.execute("ALTER TABLE worker_profiles ADD COLUMN IF NOT EXISTS created_at TEXT NOT NULL DEFAULT ''")
+
 
     conn.commit()
     conn.close()

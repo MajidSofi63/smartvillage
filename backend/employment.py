@@ -82,8 +82,8 @@ def get_public_stats():
     return {"worker_count": worker_count}
 
 
-# ---------- Admin: same data as the public feed, but with email included for
-# moderation purposes, and reachable only through the password-gated /admin/* routes ----------
+# Admin: same data as the public feed, but with email included for
+# moderation purposes, and reachable only through the password-gated /admin/* routes
 
 def list_all_workers():
     conn = get_connection()

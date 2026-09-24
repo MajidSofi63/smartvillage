@@ -9,7 +9,7 @@
 // loaded from. This works identically on localhost and on Render - nothing to
 // edit before deploying, ever.
 const API_URL = "";
-// ================= OFFLINE SUPPORT (Service Worker) =================
+//  OFFLINE SUPPORT (Service Worker) 
 // Registers sw.js so the app shell (this page, CSS, JS) and a few key data
 // endpoints work offline - see sw.js for the actual caching strategy.
 if ("serviceWorker" in navigator) {
@@ -30,7 +30,7 @@ window.addEventListener("online", function () {
 });
 
 
-// ================= SAFE FETCH HELPER =================
+//  SAFE FETCH HELPER 
 // Wraps fetch() so that network failures AND backend error responses (like
 // FastAPI's 422 validation errors) both produce a clear message instead of
 // the raw response shape leaking through as "undefined" in the UI.
@@ -64,7 +64,7 @@ async function safeFetch(url, options) {
 }
 
 
-// ================= LANGUAGE SWITCHING =================
+// LANGUAGE SWITCHING 
 
 let currentLang = localStorage.getItem("smartVillageLang") || "en";
 
@@ -94,7 +94,7 @@ document.getElementById("langSwitch").addEventListener("change", function (event
 });
 
 
-// ================= TAB SWITCHING =================
+// TAB SWITCHING 
 
 const tabButtons = document.querySelectorAll(".tab-btn");
 const tabSections = document.querySelectorAll(".tab-section");
@@ -121,7 +121,7 @@ document.querySelectorAll(".card").forEach(function (card) {
 });
 
 
-// ================= SHARED HELPERS =================
+//  SHARED HELPERS 
 
 function showResult(boxId, html, style) {
   const box = document.getElementById(boxId);
@@ -136,7 +136,7 @@ function setConnectionWarning(isDown) {
 }
 
 
-// ================= PAGE LOAD =================
+// PAGE LOAD 
 
 window.onload = async function () {
   applyLanguage(currentLang);
@@ -174,7 +174,7 @@ window.onload = async function () {
 };
 
 
-// ================= CROP PREDICTION =================
+//  CROP PREDICTION 
 
 document.getElementById("cropForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -222,7 +222,7 @@ document.getElementById("cropForm").addEventListener("submit", async function (e
 });
 
 
-// ================= TELEMEDICINE =================
+// TELEMEDICINE 
 
 document.getElementById("telemedicineForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -258,7 +258,7 @@ document.getElementById("telemedicineForm").addEventListener("submit", async fun
 });
 
 
-// ================= GOVERNMENT SCHEMES =================
+//  GOVERNMENT SCHEMES 
 
 document.getElementById("schemesForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -295,7 +295,7 @@ document.getElementById("schemesForm").addEventListener("submit", async function
 });
 
 
-// ================= SMART WATER MANAGEMENT =================
+//  SMART WATER MANAGEMENT 
 
 document.getElementById("waterForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -333,7 +333,7 @@ document.getElementById("waterForm").addEventListener("submit", async function (
 });
 
 
-// ================= DISASTER ALERTS =================
+//  DISASTER ALERTS 
 
 document.getElementById("disasterForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -373,7 +373,7 @@ document.getElementById("disasterForm").addEventListener("submit", async functio
 });
 
 
-// ================= EMPLOYMENT: VIEW SWITCHING =================
+//  EMPLOYMENT: VIEW SWITCHING 
 // Employment has three "views" (public feed, worker auth, worker's own profile) -
 // only one is visible at a time. Everyone sees the public feed by default; only
 // workers log in, to post or edit their own profile.
@@ -423,7 +423,7 @@ function restoreEmploymentSession() {
 }
 
 
-// ================= EMPLOYMENT: PUBLIC FEED =================
+//  EMPLOYMENT: PUBLIC FEED 
 // This is the actual "scroll and call" feed - visible to everyone, no login needed.
 
 async function loadPublicFeed() {
@@ -460,7 +460,7 @@ async function loadPublicFeed() {
 }
 
 
-// ================= EMPLOYMENT: WORKER AUTH =================
+//  EMPLOYMENT: WORKER AUTH 
 
 document.getElementById("workerRegisterForm").addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -523,7 +523,7 @@ document.getElementById("workerLogoutBtn").addEventListener("click", function ()
 });
 
 
-// ================= EMPLOYMENT: MY PROFILE (edit / delete) =================
+//  EMPLOYMENT: MY PROFILE (edit / delete) 
 
 async function loadMyProfile() {
   const token = localStorage.getItem("workerToken");
@@ -580,7 +580,7 @@ document.getElementById("deleteProfileBtn").addEventListener("click", async func
 });
 
 
-// ================= ADMIN PANEL =================
+//  ADMIN PANEL 
 // The admin password is kept only in this variable (never localStorage) - closing
 // the tab or refreshing requires logging in again, which is the right trade-off
 // for something this sensitive. This is the site owner's view into the same
@@ -650,7 +650,7 @@ async function loadAdminDashboard() {
 }
 
 
-// ================= FLOATING ASSISTANT WIDGET =================
+//  FLOATING ASSISTANT WIDGET 
 
 const chatBubble = document.getElementById("chatBubble");
 const chatPanel = document.getElementById("chatPanel");

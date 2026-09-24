@@ -61,19 +61,19 @@ def get_water_status(city_name):
 
     data = response.json()
 
-    # ---- Soil moisture: average today's hourly readings from the two topsoil layers ----
+    # Soil moisture: average today's hourly readings from the two topsoil layers
     shallow = data["hourly"]["soil_moisture_0_to_7cm"][-24:]   # last 24 hourly readings = today
     root_zone = data["hourly"]["soil_moisture_7_to_28cm"][-24:]
     all_readings = shallow + root_zone
     avg_moisture_m3 = sum(all_readings) / len(all_readings)  # m³/m³, roughly 0.05 (dry) to 0.5 (saturated)
     soil_moisture_percent = round(min(100, (avg_moisture_m3 / 0.5) * 100), 1)  # rough % of saturation
 
-    # ---- Water balance: rainfall minus evapotranspiration over the last 3 days ----
+    # Water balance: rainfall minus evapotranspiration over the last 3 days
     rainfall_3d = sum(data["daily"]["precipitation_sum"][:3])
     evap_3d = sum(data["daily"]["et0_fao_evapotranspiration"][:3])
     water_balance_mm = round(rainfall_3d - evap_3d, 1)  # positive = net water gain, negative = net loss
 
-    # ---- Same threshold logic as before, now driven by real numbers instead of random() ----
+    # Same threshold logic as before, now driven by real numbers instead of random()
     if soil_moisture_percent < 30:
         moisture_status = "Low"
         moisture_advice = "Soil is dry. Irrigation is recommended within the next 24 hours."
