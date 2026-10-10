@@ -7,12 +7,12 @@ const translations = {
 
     dashHeading: "Welcome",
     dashIntro: "A single platform that brings together crop prediction, telemedicine, government scheme discovery, water management, disaster alerts, and employment matching for rural communities.",
-    cardCropTitle: "🌱 Crop Prediction", cardCropDesc: "Estimate crop yield from rainfall, pesticide use, and temperature.",
-    cardTeleTitle: "🩺 Telemedicine", cardTeleDesc: "Describe your symptoms and get first-aid guidance.",
-    cardSchemesTitle: "🏛️ Govt. Schemes", cardSchemesDesc: "Find welfare schemes you're eligible for.",
-    cardWaterTitle: "💧 Water Management", cardWaterDesc: "Check soil moisture and reservoir levels.",
-    cardDisasterTitle: "⛈️ Disaster Alerts", cardDisasterDesc: "Live weather-based warnings for your area.",
-    cardEmploymentTitle: "💼 Employment", cardEmploymentDesc: "Browse local workers, or register if you're looking for work.",
+    cardCropTitle: "Crop Prediction", cardCropDesc: "Estimate crop yield from rainfall, pesticide use, and temperature.",
+    cardTeleTitle: "Telemedicine", cardTeleDesc: "Describe your symptoms and get first-aid guidance.",
+    cardSchemesTitle: "Govt. Schemes", cardSchemesDesc: "Find welfare schemes you're eligible for.",
+    cardWaterTitle: "Water Management", cardWaterDesc: "Check soil moisture and reservoir levels.",
+    cardDisasterTitle: "Disaster Alerts", cardDisasterDesc: "Live weather-based warnings for your area.",
+    cardEmploymentTitle: "Employment", cardEmploymentDesc: "Browse local workers, or register if you're looking for work.",
 
     cropHeading: "Crop Yield Prediction",
     cropDesc: "Predicts upcoming yield based on current conditions (not past years).",
@@ -49,12 +49,12 @@ const translations = {
     myProfileTitle: "My Profile", myProfileDesc: "This is exactly what shows up in the public feed.",
     btnSaveChanges: "Save Changes", btnDeleteProfile: "Delete My Profile",
 
-    adminHeading: "Admin Panel", adminDesc: "Your view into the worker database - see and moderate every registered profile.",
+    adminHeading: "Admin Panel", adminDesc: "Your view into the worker database.",
     labelAdminPassword: "Admin Password",
     adminWorkersTitle: "Registered Workers", adminActivityTitle: "Platform Activity",
 
     assistantHeading: "Ask the Assistant",
-    assistantDesc: "Ask anything about the platform in plain language - it will guide you to the right tool.",
+    assistantDesc: "Ask anything about the platform in plain language.",
     assistantPlaceholder: "e.g. How do I check if I'm eligible for a scheme?",
     btnSend: "Send",
   },
@@ -67,12 +67,12 @@ const translations = {
 
     dashHeading: "स्वागत है",
     dashIntro: "एक ही मंच जो ग्रामीण समुदायों के लिए फसल भविष्यवाणी, टेलीमेडिसिन, सरकारी योजना खोज, जल प्रबंधन, आपदा चेतावनी और रोजगार मिलान को एक साथ लाता है।",
-    cardCropTitle: "🌱 फसल भविष्यवाणी", cardCropDesc: "वर्षा, कीटनाशक उपयोग और तापमान से फसल की उपज का अनुमान लगाएं।",
-    cardTeleTitle: "🩺 टेलीमेडिसिन", cardTeleDesc: "अपने लक्षण बताएं और प्राथमिक चिकित्सा मार्गदर्शन प्राप्त करें।",
-    cardSchemesTitle: "🏛️ सरकारी योजनाएं", cardSchemesDesc: "उन कल्याणकारी योजनाओं को खोजें जिनके आप पात्र हैं।",
-    cardWaterTitle: "💧 जल प्रबंधन", cardWaterDesc: "मिट्टी की नमी और जलाशय के स्तर की जांच करें।",
-    cardDisasterTitle: "⛈️ आपदा चेतावनी", cardDisasterDesc: "आपके क्षेत्र के लिए लाइव मौसम आधारित चेतावनी।",
-    cardEmploymentTitle: "💼 रोजगार", cardEmploymentDesc: "स्थानीय कर्मचारियों को ब्राउज़ करें, या काम चाहिए तो पंजीकरण करें।",
+    cardCropTitle: "फसल भविष्यवाणी", cardCropDesc: "वर्षा, कीटनाशक उपयोग और तापमान से फसल की उपज का अनुमान लगाएं।",
+    cardTeleTitle: "टेलीमेडिसिन", cardTeleDesc: "अपने लक्षण बताएं और प्राथमिक चिकित्सा मार्गदर्शन प्राप्त करें।",
+    cardSchemesTitle: "सरकारी योजनाएं", cardSchemesDesc: "उन कल्याणकारी योजनाओं को खोजें जिनके आप पात्र हैं।",
+    cardWaterTitle: "जल प्रबंधन", cardWaterDesc: "मिट्टी की नमी और जलाशय के स्तर की जांच करें।",
+    cardDisasterTitle: "आपदा चेतावनी", cardDisasterDesc: "आपके क्षेत्र के लिए लाइव मौसम आधारित चेतावनी।",
+    cardEmploymentTitle: "रोजगार", cardEmploymentDesc: "स्थानीय कर्मचारियों को ब्राउज़ करें, या काम चाहिए तो पंजीकरण करें।",
 
     cropHeading: "फसल उपज भविष्यवाणी",
     cropDesc: "वर्तमान परिस्थितियों के आधार पर आगामी उपज का अनुमान (पिछले वर्षों का नहीं)।",
@@ -96,7 +96,7 @@ const translations = {
     btnWaterRefresh: "जल स्थिति जांचें",
 
     disasterHeading: "आपदा चेतावनी प्रणाली",
-    disasterDesc: "OpenWeather के माध्यम से लाइव मौसम, पूर्वानुमान और वायु गुणवत्ता, आपदा जोखिम नियमों के विरुद्ध जांची गई।",
+    disasterDesc: "OpenWeather के माध्यम से लाइव मौसम, पूर्वानुमान और वायु गुणवत्ता।",
     labelCity: "आपका शहर/कस्बा", btnCheckWeather: "मौसम चेतावनी जांचें",
 
     employmentHeading: "स्थानीय कर्मचारी खोजें",
@@ -109,12 +109,12 @@ const translations = {
     myProfileTitle: "मेरी प्रोफ़ाइल", myProfileDesc: "यह बिल्कुल वही है जो सार्वजनिक फ़ीड में दिखाई देता है।",
     btnSaveChanges: "परिवर्तन सहेजें", btnDeleteProfile: "मेरी प्रोफ़ाइल हटाएं",
 
-    adminHeading: "एडमिन पैनल", adminDesc: "प्लेटफॉर्म का उपयोग करने वाले सभी लोगों की पूरी जानकारी।",
+    adminHeading: "एडमिन पैनल", adminDesc: "कर्मचारी डेटाबेस का आपका दृश्य।",
     labelAdminPassword: "एडमिन पासवर्ड",
     adminWorkersTitle: "पंजीकृत कर्मचारी", adminActivityTitle: "प्लेटफ़ॉर्म गतिविधि",
 
     assistantHeading: "सहायक से पूछें",
-    assistantDesc: "प्लेटफॉर्म के बारे में सरल भाषा में कुछ भी पूछें - यह आपको सही उपकरण तक मार्गदर्शन करेगा।",
+    assistantDesc: "प्लेटफॉर्म के बारे में सरल भाषा में कुछ भी पूछें।",
     assistantPlaceholder: "जैसे मैं कैसे जांचूं कि मैं किसी योजना के लिए पात्र हूं?",
     btnSend: "भेजें",
   },
@@ -127,12 +127,12 @@ const translations = {
 
     dashHeading: "خوش آمدید",
     dashIntro: "ایک ہی پلیٹ فارم جو دیہی برادریوں کے لیے فصل کی پیشگوئی، ٹیلی میڈیسن، سرکاری اسکیم کی تلاش، پانی کا انتظام، آفت کی وارننگ اور روزگار کی تلاش کو ایک ساتھ لاتا ہے۔",
-    cardCropTitle: "🌱 فصل کی پیشگوئی", cardCropDesc: "بارش، کیڑے مار ادویات اور درجہ حرارت سے فصل کی پیداوار کا اندازہ لگائیں۔",
-    cardTeleTitle: "🩺 ٹیلی میڈیسن", cardTeleDesc: "اپنی علامات بتائیں اور ابتدائی طبی رہنمائی حاصل کریں۔",
-    cardSchemesTitle: "🏛️ سرکاری اسکیمیں", cardSchemesDesc: "وہ فلاحی اسکیمیں تلاش کریں جن کے آپ اہل ہیں۔",
-    cardWaterTitle: "💧 پانی کا انتظام", cardWaterDesc: "مٹی کی نمی اور ذخائر کی سطح چیک کریں۔",
-    cardDisasterTitle: "⛈️ آفت کی وارننگ", cardDisasterDesc: "آپ کے علاقے کے لیے لائیو موسمی وارننگز۔",
-    cardEmploymentTitle: "💼 روزگار", cardEmploymentDesc: "مقامی کارکنوں کو دیکھیں، یا کام چاہیے تو رجسٹر کریں۔",
+    cardCropTitle: "فصل کی پیشگوئی", cardCropDesc: "بارش، کیڑے مار ادویات اور درجہ حرارت سے فصل کی پیداوار کا اندازہ لگائیں۔",
+    cardTeleTitle: "ٹیلی میڈیسن", cardTeleDesc: "اپنی علامات بتائیں اور ابتدائی طبی رہنمائی حاصل کریں۔",
+    cardSchemesTitle: "سرکاری اسکیمیں", cardSchemesDesc: "وہ فلاحی اسکیمیں تلاش کریں جن کے آپ اہل ہیں۔",
+    cardWaterTitle: "پانی کا انتظام", cardWaterDesc: "مٹی کی نمی اور ذخائر کی سطح چیک کریں۔",
+    cardDisasterTitle: "آفت کی وارننگ", cardDisasterDesc: "آپ کے علاقے کے لیے لائیو موسمی وارننگز۔",
+    cardEmploymentTitle: "روزگار", cardEmploymentDesc: "مقامی کارکنوں کو دیکھیں، یا کام چاہیے تو رجسٹر کریں۔",
 
     cropHeading: "فصل کی پیداوار کی پیشگوئی",
     cropDesc: "موجودہ حالات کی بنیاد پر آئندہ پیداوار کا اندازہ (ماضی کے سالوں کا نہیں)۔",
@@ -156,7 +156,7 @@ const translations = {
     btnWaterRefresh: "پانی کی صورتحال چیک کریں",
 
     disasterHeading: "آفت کی وارننگ کا نظام",
-    disasterDesc: "OpenWeather کے ذریعے لائیو موسم، پیشگوئی اور ہوا کا معیار، آفت کے خطرے کے اصولوں کے خلاف جانچا گیا۔",
+    disasterDesc: "OpenWeather کے ذریعے لائیو موسم، پیشگوئی اور ہوا کا معیار۔",
     labelCity: "آپ کا شہر/قصبہ", btnCheckWeather: "موسمی وارننگز چیک کریں",
 
     employmentHeading: "مقامی کارکن تلاش کریں",
@@ -169,12 +169,12 @@ const translations = {
     myProfileTitle: "میری پروفائل", myProfileDesc: "یہ بالکل وہی ہے جو عوامی فیڈ میں دکھایا جاتا ہے۔",
     btnSaveChanges: "تبدیلیاں محفوظ کریں", btnDeleteProfile: "میری پروفائل حذف کریں",
 
-    adminHeading: "ایڈمن پینل", adminDesc: "پلیٹ فارم استعمال کرنے والے سب کی مکمل معلومات۔",
+    adminHeading: "ایڈمن پینل", adminDesc: "ورکر ڈیٹابیس کا آپ کا منظر۔",
     labelAdminPassword: "ایڈمن پاس ورڈ",
     adminWorkersTitle: "رجسٹرڈ کارکن", adminActivityTitle: "پلیٹ فارم کی سرگرمی",
 
     assistantHeading: "معاون سے پوچھیں",
-    assistantDesc: "پلیٹ فارم کے بارے میں آسان زبان میں کچھ بھی پوچھیں - یہ آپ کو صحیح ٹول تک رہنمائی کرے گا۔",
+    assistantDesc: "پلیٹ فارم کے بارے میں آسان زبان میں کچھ بھی پوچھیں۔",
     assistantPlaceholder: "مثلاً میں کیسے چیک کروں کہ میں کسی اسکیم کا اہل ہوں؟",
     btnSend: "بھیجیں",
   },

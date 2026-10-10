@@ -1,79 +1,95 @@
 <!-- index.html -->
-<!-- Single-page frontend for the AI Smart Village Platform.
-     Tabs switch visibility via script.js. Text is translated live via translations.js
-     using data-i18n attributes - every element that should change language has one. -->
+<!-- Single-page frontend for the AI Smart Village Platform. -->
 
 <!DOCTYPE html>
 <html lang="en" id="htmlRoot">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Smart Village Platform</title>
+
+  <!-- Distinctive type pairing: Fraunces (a warm, characterful serif) for headings,
+       Inter for body text - replaces the generic system-font look. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#1f3a2e">
 </head>
-
 <body>
 
-  <!-- Top header: platform name + language switcher -->
+  <!-- Top header -->
   <header>
-    <h1 data-i18n="appTitle">🌾 AI Smart Village Platform</h1>
-    <select id="langSwitch">
-      <option value="en">English</option>
-      <option value="hi">हिंदी</option>
-      <option value="ur">اردو</option>
-    </select>
+    <div class="header-inner">
+      <h1 data-i18n="appTitle">🌾 AI Smart Village Platform</h1>
+      <select id="langSwitch">
+        <option value="en">English</option>
+        <option value="hi">हिंदी</option>
+        <option value="ur">اردو</option>
+      </select>
+    </div>
   </header>
 
   <!-- Tab buttons -->
   <nav id="tabNav">
-    <button class="tab-btn active" data-tab="dashboard" data-i18n="navDashboard">Dashboard</button>
-    <button class="tab-btn" data-tab="crop" data-i18n="navCrop">Crop Prediction</button>
-    <button class="tab-btn" data-tab="telemedicine" data-i18n="navTele">Telemedicine</button>
-    <button class="tab-btn" data-tab="schemes" data-i18n="navSchemes">Govt. Schemes</button>
-    <button class="tab-btn" data-tab="water" data-i18n="navWater">Water Management</button>
-    <button class="tab-btn" data-tab="disaster" data-i18n="navDisaster">Disaster Alerts</button>
-    <button class="tab-btn" data-tab="employment" data-i18n="navEmployment">Employment</button>
+    <div class="tab-nav-inner">
+      <button class="tab-btn active" data-tab="dashboard" data-i18n="navDashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="crop" data-i18n="navCrop">Crop Prediction</button>
+      <button class="tab-btn" data-tab="telemedicine" data-i18n="navTele">Telemedicine</button>
+      <button class="tab-btn" data-tab="schemes" data-i18n="navSchemes">Govt. Schemes</button>
+      <button class="tab-btn" data-tab="water" data-i18n="navWater">Water Management</button>
+      <button class="tab-btn" data-tab="disaster" data-i18n="navDisaster">Disaster Alerts</button>
+      <button class="tab-btn" data-tab="employment" data-i18n="navEmployment">Employment</button>
+    </div>
   </nav>
 
-  <!-- Shown only if the backend can't be reached - stops silent, confusing failures -->
   <div id="connectionWarning" class="connection-warning"></div>
 
   <main>
 
     <!-- ================= DASHBOARD TAB ================= -->
     <section id="dashboard" class="tab-section active">
-      <h2 data-i18n="dashHeading">Welcome</h2>
-      <p data-i18n="dashIntro">
-        A single platform that brings together crop prediction, telemedicine, government
-        scheme discovery, water management, disaster alerts, and employment matching.
-      </p>
+
+      <!-- Hero banner -->
+      <div class="hero">
+        <h2 data-i18n="dashHeading">Welcome</h2>
+        <p data-i18n="dashIntro">
+          A single platform that brings together crop prediction, telemedicine, government
+          scheme discovery, water management, disaster alerts, and employment matching.
+        </p>
+      </div>
 
       <div class="card-grid">
         <div class="card" data-goto="crop">
-          <h3 data-i18n="cardCropTitle">🌱 Crop Prediction</h3>
+          <div class="card-icon-badge badge-crop">🌱</div>
+          <h3 data-i18n="cardCropTitle">Crop Prediction</h3>
           <p data-i18n="cardCropDesc">Estimate crop yield from rainfall, pesticide use, and temperature.</p>
         </div>
         <div class="card" data-goto="telemedicine">
-          <h3 data-i18n="cardTeleTitle">🩺 Telemedicine</h3>
+          <div class="card-icon-badge badge-tele">🩺</div>
+          <h3 data-i18n="cardTeleTitle">Telemedicine</h3>
           <p data-i18n="cardTeleDesc">Describe your symptoms and get first-aid guidance.</p>
         </div>
         <div class="card" data-goto="schemes">
-          <h3 data-i18n="cardSchemesTitle">🏛️ Govt. Schemes</h3>
+          <div class="card-icon-badge badge-schemes">🏛️</div>
+          <h3 data-i18n="cardSchemesTitle">Govt. Schemes</h3>
           <p data-i18n="cardSchemesDesc">Find welfare schemes you're eligible for.</p>
         </div>
         <div class="card" data-goto="water">
-          <h3 data-i18n="cardWaterTitle">💧 Water Management</h3>
+          <div class="card-icon-badge badge-water">💧</div>
+          <h3 data-i18n="cardWaterTitle">Water Management</h3>
           <p data-i18n="cardWaterDesc">Check soil moisture and reservoir levels.</p>
         </div>
         <div class="card" data-goto="disaster">
-          <h3 data-i18n="cardDisasterTitle">⛈️ Disaster Alerts</h3>
+          <div class="card-icon-badge badge-disaster">⛈️</div>
+          <h3 data-i18n="cardDisasterTitle">Disaster Alerts</h3>
           <p data-i18n="cardDisasterDesc">Live weather-based warnings for your area.</p>
         </div>
         <div class="card" data-goto="employment">
-          <h3 data-i18n="cardEmploymentTitle">💼 Employment</h3>
+          <div class="card-icon-badge badge-employment">💼</div>
+          <h3 data-i18n="cardEmploymentTitle">Employment</h3>
           <p data-i18n="cardEmploymentDesc">Browse local workers, or register if you're looking for work.</p>
         </div>
       </div>
@@ -160,8 +176,7 @@
     <!-- ================= WATER MANAGEMENT TAB ================= -->
     <section id="water" class="tab-section">
       <h2 data-i18n="waterHeading">Smart Water Management</h2>
-      <p class="section-desc" data-i18n="waterDesc">Real soil moisture and rainfall data for your area, via Open-Meteo.
-      </p>
+      <p class="section-desc" data-i18n="waterDesc">Real soil moisture and rainfall data for your area, via Open-Meteo.</p>
 
       <form id="waterForm">
         <label for="waterCity" data-i18n="labelCity">Your City/Town</label>
@@ -189,26 +204,19 @@
     </section>
 
     <!-- ================= EMPLOYMENT TAB ================= -->
-    <!-- Public feed by default - anyone can scroll and call a worker directly.
-         Only workers register/log in (to post or edit their own profile) -
-         there's no separate employer account or job-posting flow. -->
     <section id="employment" class="tab-section">
       <div class="employment-top-bar">
         <div>
           <h2 data-i18n="employmentHeading">Find Local Workers</h2>
-          <p class="section-desc" data-i18n="employmentDesc">Browse profiles below and call directly - no signup needed
-            to look.</p>
+          <p class="section-desc" data-i18n="employmentDesc">Browse profiles below and call directly - no signup needed to look.</p>
         </div>
-        <button id="showWorkerAuthBtn" class="btn-secondary" data-i18n="lookingForWorkBtn">Looking for Work?
-          Register/Login</button>
+        <button id="showWorkerAuthBtn" class="btn-secondary" data-i18n="lookingForWorkBtn">Looking for Work? Register/Login</button>
       </div>
 
-      <!-- View 1: the public feed (default view, visible to everyone) -->
       <div id="publicFeedView" class="emp-view active">
         <div id="workerFeedList" class="feed-list"></div>
       </div>
 
-      <!-- View 2: worker login/register -->
       <div id="workerAuthBox" class="emp-view auth-box">
         <div class="auth-tabs">
           <button class="auth-tab-btn active" data-authtab="workerLoginForm" data-i18n="btnLogin">Login</button>
@@ -235,8 +243,7 @@
           <label data-i18n="labelSkills">Your Skills</label>
           <textarea id="workerRegSkills" rows="2" placeholder="e.g. farming, driving, tailoring" required></textarea>
           <label data-i18n="labelBio">Short Intro (optional)</label>
-          <textarea id="workerRegBio" rows="2"
-            placeholder="e.g. 5 years experience as a farm labourer, available immediately"></textarea>
+          <textarea id="workerRegBio" rows="2" placeholder="e.g. 5 years experience as a farm labourer, available immediately"></textarea>
           <label data-i18n="labelPassword">Create a Password</label>
           <input type="password" id="workerRegPassword" required>
           <button type="submit" data-i18n="btnRegister">Register</button>
@@ -246,7 +253,6 @@
         <button class="back-btn" data-backto="publicFeedView" data-i18n="btnBack">← Back to Feed</button>
       </div>
 
-      <!-- View 3: the logged-in worker's own profile management -->
       <div id="workerProfileBox" class="emp-view dashboard-box">
         <div class="dashboard-header">
           <span data-i18n="welcomeText">Welcome,</span> <strong id="workerDashName"></strong>
@@ -281,13 +287,10 @@
     </section>
 
     <!-- ================= ADMIN TAB ================= -->
-    <!-- Not in the nav bar - only reachable directly at /admin (see main.py) -->
     <section id="admin" class="tab-section">
       <h2 data-i18n="adminHeading">Admin Panel</h2>
-      <p class="section-desc" data-i18n="adminDesc">Your view into the worker database - see and moderate every
-        registered profile.</p>
+      <p class="section-desc" data-i18n="adminDesc">Your view into the worker database.</p>
 
-      <!-- Password gate -->
       <form id="adminLoginForm" class="auth-form active">
         <label data-i18n="labelAdminPassword">Admin Password</label>
         <input type="password" id="adminPasswordInput" required>
@@ -295,7 +298,6 @@
       </form>
       <div id="adminAuthResult" class="result-box"></div>
 
-      <!-- Dashboard, hidden until the password is verified -->
       <div id="adminDashboard" class="dashboard-box">
         <div class="dashboard-header">
           <span data-i18n="adminHeading">Admin Panel</span>
@@ -314,7 +316,6 @@
 
   </main>
 
-  <!-- ================= FLOATING ASSISTANT WIDGET ================= -->
   <button id="chatBubble" aria-label="Open assistant">💬</button>
 
   <div id="chatPanel">
@@ -322,12 +323,10 @@
       <span data-i18n="assistantHeading">Ask the Assistant</span>
       <button id="chatCloseBtn" aria-label="Close assistant">✕</button>
     </div>
-
     <div id="chatWindow" class="chat-window"></div>
-
     <form id="chatForm">
       <input type="text" id="chatInput" data-i18n-placeholder="assistantPlaceholder"
-        placeholder="e.g. How do I check if I'm eligible for a scheme?" required>
+             placeholder="e.g. How do I check if I'm eligible for a scheme?" required>
       <button type="submit" data-i18n="btnSend">Send</button>
     </form>
   </div>
@@ -335,5 +334,4 @@
   <script src="translations.js"></script>
   <script src="script.js"></script>
 </body>
-
 </html>

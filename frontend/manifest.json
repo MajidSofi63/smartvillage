@@ -1,17 +1,12 @@
 {
-    "name": "AI Smart Village Platform",
-    "short_name": "Smart Village",
-    "description": "Crop prediction, telemedicine, government schemes, water management, disaster alerts, and employment for rural communities.",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#faf8f3",
-    "theme_color": "#1f3a2e",
-    "icons": [
-        {
-            "src": "/icon.svg",
-            "sizes": "any",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        }
-    ]
+  "name": "AI Smart Village Platform",
+  "short_name": "Smart Village",
+  "description": "Crop prediction, telemedicine, government schemes, water management, disaster alerts, and employment for rural communities.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f5ef",
+  "theme_color": "#1f3a2e",
+  "icons": [
+    {"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+  ]
 }

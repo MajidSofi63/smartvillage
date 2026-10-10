@@ -1,10 +1,7 @@
 // script.js
 // Handles: tab switching, language translation, connecting all forms to the
-// backend, and the floating chat widget.
-//
-// API_URL is deliberately empty: this file is now served BY the same FastAPI app
-// it talks to (see the StaticFiles mount at the bottom of backend/main.py), so
-// every request is automatically same-origin.
+// backend, and the floating chat widget. API_URL is empty because this file is
+// served BY the same FastAPI app it talks to (same origin).
 const API_URL = "";
 
 // ================= OFFLINE SUPPORT (Service Worker) =================
@@ -15,13 +12,8 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
-
-window.addEventListener("offline", function () {
-  setConnectionWarning(true);
-});
-window.addEventListener("online", function () {
-  setConnectionWarning(false);
-});
+window.addEventListener("offline", function () { setConnectionWarning(true); });
+window.addEventListener("online", function () { setConnectionWarning(false); });
 
 
 // ================= SAFE FETCH HELPER =================
@@ -97,15 +89,11 @@ function showTab(tabName) {
 }
 
 tabButtons.forEach(function (btn) {
-  btn.addEventListener("click", function () {
-    showTab(btn.dataset.tab);
-  });
+  btn.addEventListener("click", function () { showTab(btn.dataset.tab); });
 });
 
 document.querySelectorAll(".card").forEach(function (card) {
-  card.addEventListener("click", function () {
-    showTab(card.dataset.goto);
-  });
+  card.addEventListener("click", function () { showTab(card.dataset.goto); });
 });
 
 
@@ -130,9 +118,7 @@ window.onload = async function () {
   applyLanguage(currentLang);
   restoreEmploymentSession();
 
-  // Admin is deliberately not in the nav bar - only reachable by visiting /admin
-  // directly. The backend serves this same page for that URL (see main.py);
-  // here we just notice the path and switch straight to the admin view.
+  // Admin is deliberately not in the nav bar - only reachable by visiting /admin directly
   if (window.location.pathname === "/admin") {
     showTab("admin");
   }
@@ -347,9 +333,7 @@ document.getElementById("disasterForm").addEventListener("submit", async functio
               <div class="result-row"><span>Forecast</span><span>${data.forecast_summary}</span></div>
               <div class="result-row"><span>${data.air_quality}</span><span></span></div>
               <h4>Alerts</h4><ul>`;
-  data.alerts.forEach(function (alert) {
-    html += `<li>${alert}</li>`;
-  });
+  data.alerts.forEach(function (alert) { html += `<li>${alert}</li>`; });
   html += "</ul>";
 
   showResult("disasterResult", html, hasRisk ? "urgent" : "success");
@@ -371,9 +355,7 @@ document.getElementById("showWorkerAuthBtn").addEventListener("click", function 
 });
 
 document.querySelectorAll(".back-btn").forEach(function (btn) {
-  btn.addEventListener("click", function () {
-    showEmploymentView(btn.dataset.backto);
-  });
+  btn.addEventListener("click", function () { showEmploymentView(btn.dataset.backto); });
 });
 
 document.querySelectorAll(".auth-tab-btn").forEach(function (tabBtn) {
@@ -589,7 +571,6 @@ document.getElementById("adminLogoutBtn").addEventListener("click", function () 
 async function loadAdminDashboard() {
   const headers = { "X-Admin-Password": adminPassword };
 
-  // ---- Registered worker count + list ----
   const result = await safeFetch(`${API_URL}/admin/workers`, { headers });
 
   document.getElementById("adminStatsBar").innerHTML =
@@ -622,7 +603,6 @@ async function loadAdminDashboard() {
     workersList.innerHTML = "<p>No workers registered yet.</p>";
   }
 
-  // ---- Platform activity (real usage counts, not just who registered) ----
   const activityResult = await safeFetch(`${API_URL}/admin/activity`, { headers });
   const activityLabels = {
     crop_prediction: "Crop Predictions", telemedicine_query: "Telemedicine Queries",
@@ -646,13 +626,8 @@ async function loadAdminDashboard() {
 const chatBubble = document.getElementById("chatBubble");
 const chatPanel = document.getElementById("chatPanel");
 
-chatBubble.addEventListener("click", function () {
-  chatPanel.classList.toggle("open");
-});
-
-document.getElementById("chatCloseBtn").addEventListener("click", function () {
-  chatPanel.classList.remove("open");
-});
+chatBubble.addEventListener("click", function () { chatPanel.classList.toggle("open"); });
+document.getElementById("chatCloseBtn").addEventListener("click", function () { chatPanel.classList.remove("open"); });
 
 document.getElementById("chatForm").addEventListener("submit", async function (event) {
   event.preventDefault();
