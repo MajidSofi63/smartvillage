@@ -229,6 +229,27 @@
           <label data-i18n="labelPassword">Password</label>
           <input type="password" id="workerLoginPassword" required>
           <button type="submit" data-i18n="btnLogin">Login</button>
+          <button type="button" id="forgotPasswordLink" class="link-btn" data-i18n="forgotPasswordLink">Forgot password?</button>
+        </form>
+
+        <!-- Forgot password: ask for the email, Supabase sends the reset link -->
+        <form id="forgotPasswordForm" class="auth-form">
+          <h3 data-i18n="forgotPasswordTitle">Reset your password</h3>
+          <p class="form-hint" data-i18n="forgotPasswordDesc">Enter the email you registered with and we'll send you a link to choose a new password.</p>
+          <label data-i18n="labelEmail">Email</label>
+          <input type="email" id="forgotEmail" required>
+          <button type="submit" data-i18n="btnSendResetLink">Send Reset Link</button>
+          <button type="button" class="link-btn" data-showform="workerLoginForm" data-i18n="btnBackToLogin">← Back to login</button>
+        </form>
+
+        <!-- Reset password: shown after they click the link in the email -->
+        <form id="resetPasswordForm" class="auth-form">
+          <h3 data-i18n="resetPasswordTitle">Choose a new password</h3>
+          <label data-i18n="labelNewPassword">New Password</label>
+          <input type="password" id="resetNewPassword" required minlength="6">
+          <label data-i18n="labelConfirmPassword">Confirm New Password</label>
+          <input type="password" id="resetConfirmPassword" required minlength="6">
+          <button type="submit" data-i18n="btnSetNewPassword">Save New Password</button>
         </form>
 
         <form id="workerRegisterForm" class="auth-form">

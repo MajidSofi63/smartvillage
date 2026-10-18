@@ -12,6 +12,12 @@
 # requires a paid SMS provider (Twilio etc.) configured just to turn it on - there's
 # no free path for phone login. Email is free and doesn't need any extra service.
 # Phone number is still collected and stored as a separate CONTACT field on workers.
+#
+# PASSWORD RESET: request_password_reset() asks Supabase to email a reset link, and
+# update_password() sets the new password once the person comes back through that
+# link. Supabase's built-in email sender only delivers to your own team and is capped
+# at 2 emails/hour, so for real workers a custom SMTP sender must be configured in
+# the Supabase dashboard (Authentication -> Emails -> SMTP Settings).
 
 import requests
 from config import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
@@ -102,6 +108,63 @@ def log_in(email, password):
 
     data = response.json()
     return {"success": True, "token": data["access_token"], "id": data["user"]["id"], "metadata": data["user"]["user_metadata"]}
+
+
+def request_password_reset(email, redirect_url):
+    """
+    Asks Supabase to email the person a password-reset link. redirect_url is where
+    that link sends them back to (this site) - Supabase only honours it if it's
+    listed under Authentication -> URL Configuration -> Redirect URLs.
+
+    Supabase answers 200 whether or not the email belongs to an account, on purpose,
+    so this never reveals who has registered. Only real failures (network down, the
+    60-second per-address cooldown, the email rate limit) come back as errors.
+    """
+    try:
+        response = requests.post(
+            f"{AUTH_URL}/recover",
+            headers=HEADERS,
+            params={"redirect_to": redirect_url},
+            json={"email": email},
+            timeout=15,
+        )
+    except requests.exceptions.RequestException:
+        return {"success": False, "message": "Could not reach Supabase. Check your internet connection."}
+
+    if response.status_code != 200:
+        message = _extract_error_message(response, "Could not send the reset email. Please try again in a few minutes.")
+        return {"success": False, "message": message}
+
+    return {"success": True}
+
+
+def update_password(access_token, new_password):
+    """
+    Sets a new password using the short-lived token Supabase put in the emailed link.
+    Supabase checks the token itself, so a wrong, expired, or already-used token
+    simply comes back as an error.
+    """
+    try:
+        response = requests.put(
+            f"{AUTH_URL}/user",
+            headers={
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            json={"password": new_password},
+            timeout=15,
+        )
+    except requests.exceptions.RequestException:
+        return {"success": False, "message": "Could not reach Supabase. Check your internet connection."}
+
+    if response.status_code != 200:
+        message = _extract_error_message(
+            response, "Could not update the password. The reset link may have expired - please request a new one."
+        )
+        return {"success": False, "message": message}
+
+    return {"success": True}
 
 
 def _extract_error_message(response, fallback):

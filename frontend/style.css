@@ -530,6 +530,41 @@ html[dir="rtl"] .result-box.urgent {
 .auth-form { display: none; }
 .auth-form.active { display: flex; }
 
+/* headings and hint text used inside the forgot / reset password forms */
+.auth-form h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 0 0 6px 0;
+  color: var(--green-dark);
+}
+
+.form-hint {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #6f6558;
+}
+
+/* a button that looks like a text link (e.g. "Forgot password?") */
+.link-btn {
+  align-self: flex-start;
+  margin-top: 16px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--green-mid);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.link-btn:hover {
+  filter: none;
+  transform: none;
+  box-shadow: none;
+  color: var(--green-dark);
+}
+
 .back-btn {
   margin-top: 14px;
   background: none;

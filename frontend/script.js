@@ -117,6 +117,7 @@ function setConnectionWarning(isDown) {
 window.onload = async function () {
   applyLanguage(currentLang);
   restoreEmploymentSession();
+  handlePasswordRecoveryLink(); // if they arrived from a reset email, show the "new password" form
 
   // Admin is deliberately not in the nav bar - only reachable by visiting /admin directly
   if (window.location.pathname === "/admin") {
@@ -352,6 +353,7 @@ function showEmploymentView(viewId) {
 
 document.getElementById("showWorkerAuthBtn").addEventListener("click", function () {
   showEmploymentView("workerAuthBox");
+  showAuthForm("workerLoginForm"); // always open on the login form, even if they left from "forgot password"
 });
 
 document.querySelectorAll(".back-btn").forEach(function (btn) {
@@ -367,6 +369,129 @@ document.querySelectorAll(".auth-tab-btn").forEach(function (tabBtn) {
     document.getElementById(tabBtn.dataset.authtab).classList.add("active");
   });
 });
+
+// ================= EMPLOYMENT: FORGOT / RESET PASSWORD =================
+// Four forms live inside the auth box: login, register, forgot-password, reset-password.
+// Login/register are reached through the two tabs; the other two are not, so the
+// tabs are hidden while those are showing.
+
+function showAuthForm(formId) {
+  const box = document.getElementById("workerAuthBox");
+  box.querySelectorAll(".auth-form").forEach(function (form) {
+    form.classList.toggle("active", form.id === formId);
+  });
+
+  const isTabbedForm = formId === "workerLoginForm" || formId === "workerRegisterForm";
+  box.querySelector(".auth-tabs").style.display = isTabbedForm ? "" : "none";
+  box.querySelectorAll(".auth-tab-btn").forEach(function (tabBtn) {
+    tabBtn.classList.toggle("active", tabBtn.dataset.authtab === formId);
+  });
+}
+
+function clearAuthMessage() {
+  const box = document.getElementById("workerAuthResult");
+  box.innerHTML = "";
+  box.className = "result-box";
+}
+
+// The short-lived token from the emailed link. Kept only in memory - never saved to
+// localStorage, and removed from the address bar as soon as the page reads it.
+let recoveryToken = null;
+
+document.getElementById("forgotPasswordLink").addEventListener("click", function () {
+  clearAuthMessage();
+  showAuthForm("forgotPasswordForm");
+});
+
+// Any button marked data-showform="<formId>" just switches to that form
+document.querySelectorAll("[data-showform]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    clearAuthMessage();
+    showAuthForm(btn.dataset.showform);
+  });
+});
+
+document.getElementById("forgotPasswordForm").addEventListener("submit", async function (event) {
+  event.preventDefault();
+
+  const result = await safeFetch(`${API_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: document.getElementById("forgotEmail").value,
+      redirect_to: window.location.origin + "/", // the emailed link brings them back to this site
+    }),
+  });
+
+  if (!result.ok || !result.data.success) {
+    showResult("workerAuthResult", result.ok ? result.data.message : result.errorMessage, "error");
+    return;
+  }
+
+  showResult("workerAuthResult", translations[currentLang].resetEmailSent, "success");
+});
+
+document.getElementById("resetPasswordForm").addEventListener("submit", async function (event) {
+  event.preventDefault();
+  const text = translations[currentLang];
+
+  const newPassword = document.getElementById("resetNewPassword").value;
+  const confirmPassword = document.getElementById("resetConfirmPassword").value;
+
+  if (newPassword.length < 6) {
+    showResult("workerAuthResult", text.passwordTooShort, "error");
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    showResult("workerAuthResult", text.passwordsDontMatch, "error");
+    return;
+  }
+
+  const result = await safeFetch(`${API_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: recoveryToken, new_password: newPassword }),
+  });
+
+  if (!result.ok || !result.data.success) {
+    showResult("workerAuthResult", result.ok ? result.data.message : result.errorMessage, "error");
+    return;
+  }
+
+  recoveryToken = null;
+  event.target.reset();
+  showAuthForm("workerLoginForm");
+  showResult("workerAuthResult", text.passwordResetDone, "success");
+});
+
+// When someone clicks the link in their reset email, Supabase sends them back to this
+// site with the token in the part of the address after "#". Returns true if that's
+// what this page load is, so the normal start-up can step aside.
+function handlePasswordRecoveryLink() {
+  if (!window.location.hash || window.location.hash.length < 2) return false;
+  const params = new URLSearchParams(window.location.hash.substring(1));
+
+  // An expired or already-used link comes back as an error in the same place
+  if (params.get("error") || params.get("error_description")) {
+    history.replaceState(null, "", window.location.pathname);
+    showTab("employment");
+    showEmploymentView("workerAuthBox");
+    showAuthForm("forgotPasswordForm");
+    showResult("workerAuthResult", translations[currentLang].resetLinkExpired, "error");
+    return true;
+  }
+
+  if (params.get("type") === "recovery" && params.get("access_token")) {
+    recoveryToken = params.get("access_token");
+    history.replaceState(null, "", window.location.pathname); // take the token out of the address bar
+    showTab("employment");
+    showEmploymentView("workerAuthBox");
+    showAuthForm("resetPasswordForm");
+    return true;
+  }
+
+  return false;
+}
 
 function restoreEmploymentSession() {
   const workerToken = localStorage.getItem("workerToken");

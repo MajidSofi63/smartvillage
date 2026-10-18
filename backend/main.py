@@ -133,6 +133,23 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+    redirect_to: str  # this site's own address - where the emailed link sends them back to
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str        # the short-lived token Supabase put in the emailed link
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v):
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters.")
+        return v
+
+
 class ChatRequest(BaseModel):
     message: str
 
@@ -251,6 +268,26 @@ def login_worker(request: LoginRequest):
     if result["metadata"].get("role") != "worker":
         return {"success": False, "message": "This account isn't registered as a worker."}
     return {"success": True, "token": result["token"], "name": result["metadata"].get("name", "")}
+
+
+# --- Employment: forgotten password ---
+
+@app.post("/auth/forgot-password")
+def forgot_password(request: ForgotPasswordRequest):
+    result = auth.request_password_reset(request.email, request.redirect_to)
+    if not result["success"]:
+        return {"success": False, "message": result["message"]}
+    # Same wording whether or not that email has an account, so this can't be used
+    # to find out who is registered.
+    return {"success": True, "message": "If that email is registered, a reset link is on its way."}
+
+
+@app.post("/auth/reset-password")
+def reset_password(request: ResetPasswordRequest):
+    result = auth.update_password(request.token, request.new_password)
+    if not result["success"]:
+        return {"success": False, "message": result["message"]}
+    return {"success": True, "message": "Password updated."}
 
 
 @app.get("/worker/profile")
