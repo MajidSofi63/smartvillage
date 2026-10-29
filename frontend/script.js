@@ -67,6 +67,9 @@ function applyLanguage(lang) {
   });
 
   document.getElementById("langSwitch").value = lang;
+
+  // Re-render the last crop result so its labels follow the new language.
+  if (lastCropRecommendation) renderCropRecommendation(lastCropRecommendation);
 }
 
 document.getElementById("langSwitch").addEventListener("change", function (event) {
@@ -124,75 +127,331 @@ window.onload = async function () {
     showTab("admin");
   }
 
-  const result = await safeFetch(`${API_URL}/options`);
+  await loadCropSeasons();
+  setupDistrictSearch();
+  updateCropButtonState();
+};
 
+
+// ================= CROP RECOMMENDATION =================
+
+let cropDistrictId = null;
+let cropSearchTimer = null;
+let lastCropRecommendation = null;
+
+function translate(key, fallback) {
+  const dict = translations[currentLang] || {};
+  return dict[key] || fallback;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+async function loadCropSeasons() {
+  const result = await safeFetch(`${API_URL}/api/seasons`);
   if (!result.ok) {
     setConnectionWarning(true);
     return;
   }
   setConnectionWarning(false);
 
-  const areaList = document.getElementById("areaOptions");
-  const cropList = document.getElementById("cropOptions");
-
-  result.data.areas.forEach(function (areaName) {
+  const select = document.getElementById("seasonSelect");
+  result.data.seasons.forEach(function (season) {
     const option = document.createElement("option");
-    option.value = areaName;
-    areaList.appendChild(option);
+    option.value = season;
+    option.textContent = season;
+    select.appendChild(option);
+  });
+}
+
+function setupDistrictSearch() {
+  const input = document.getElementById("districtSearch");
+  const suggestions = document.getElementById("districtSuggestions");
+
+  input.addEventListener("input", function () {
+    const query = input.value.trim();
+
+    // Typing invalidates the previous selection until a suggestion is clicked.
+    cropDistrictId = null;
+    document.getElementById("districtId").value = "";
+    updateCropButtonState();
+
+    suggestions.innerHTML = "";
+    suggestions.style.display = "none";
+    if (query.length < 2) return;
+
+    clearTimeout(cropSearchTimer);
+    cropSearchTimer = setTimeout(async function () {
+      const result = await safeFetch(
+        `${API_URL}/api/districts?q=${encodeURIComponent(query)}`
+      );
+      if (!result.ok) return;
+
+      suggestions.innerHTML = "";
+      if (!result.data.districts.length) {
+        suggestions.style.display = "none";
+        return;
+      }
+
+      result.data.districts.forEach(function (district) {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "suggestion-item";
+        item.textContent = `${district.district}, ${district.state}`;
+        item.addEventListener("click", function () {
+          input.value = `${district.district}, ${district.state}`;
+          cropDistrictId = district.id;
+          document.getElementById("districtId").value = String(district.id);
+          suggestions.innerHTML = "";
+          suggestions.style.display = "none";
+          updateCropButtonState();
+        });
+        suggestions.appendChild(item);
+      });
+      suggestions.style.display = "block";
+    }, 250);
   });
 
-  result.data.crops.forEach(function (cropName) {
-    const option = document.createElement("option");
-    option.value = cropName;
-    cropList.appendChild(option);
+  // Hide suggestions when clicking outside the search box.
+  document.addEventListener("click", function (event) {
+    if (event.target !== input && !suggestions.contains(event.target)) {
+      suggestions.style.display = "none";
+    }
   });
-};
 
+  document.getElementById("seasonSelect").addEventListener("change", updateCropButtonState);
+}
 
-// ================= CROP PREDICTION =================
+function updateCropButtonState() {
+  const season = document.getElementById("seasonSelect").value;
+  document.getElementById("recommendBtn").disabled = !(cropDistrictId && season);
+}
 
 document.getElementById("cropForm").addEventListener("submit", async function (event) {
   event.preventDefault();
 
-  const rainfall = parseFloat(document.getElementById("rainfall").value);
-  const pesticides = parseFloat(document.getElementById("pesticides").value);
-  const temperature = parseFloat(document.getElementById("temperature").value);
-
-  if (isNaN(rainfall) || isNaN(pesticides) || isNaN(temperature)) {
-    showResult("cropResult", "Please fill in rainfall, pesticides, and temperature with valid numbers.", "error");
+  const season = document.getElementById("seasonSelect").value;
+  if (!cropDistrictId) {
+    showResult("cropResult", translate("cropPickDistrict", "Please pick a district from the suggestions."), "error");
+    return;
+  }
+  if (!season) {
+    showResult("cropResult", translate("cropPickSeason", "Please select a planting season."), "error");
     return;
   }
 
-  const requestData = {
-    area: document.getElementById("area").value,
-    crop: document.getElementById("cropType").value,
-    rainfall: rainfall,
-    pesticides: pesticides,
-    temperature: temperature,
-    language: currentLang,
-  };
+  const box = document.getElementById("cropResult");
+  box.className = "result-box visible";
+  box.innerHTML = `<p class="crop-loading">${translate("cropLoading", "Analysing crop suitability…")}</p>`;
 
-  const result = await safeFetch(`${API_URL}/predict-crop`, {
+  const result = await safeFetch(`${API_URL}/api/recommend`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestData),
+    body: JSON.stringify({
+      district_id: cropDistrictId,
+      season: season,
+      language: currentLang,
+    }),
   });
 
   if (!result.ok) {
-    showResult("cropResult", result.errorMessage, "error");
+    showResult("cropResult", escapeHtml(result.errorMessage), "error");
     return;
   }
 
-  if (result.data.success) {
-    showResult(
-      "cropResult",
-      `<h4>Predicted Yield</h4>${result.data.predicted_yield_hg_per_ha} hg/ha<p>${result.data.explanation}</p>`,
-      "success"
-    );
-  } else {
-    showResult("cropResult", result.data.message, "error");
-  }
+  lastCropRecommendation = result.data;
+  document.getElementById("cropResult").className = "result-box visible success";
+  renderCropRecommendation(result.data);
 });
+
+function renderCropRecommendation(data) {
+  const box = document.getElementById("cropResult");
+  if (!data || !data.recommendations || !data.recommendations.length) {
+    box.className = "result-box visible warning";
+    box.innerHTML = `<p>${translate("cropNoResults", "No crops could be recommended for this district and season.")}</p>`;
+    return;
+  }
+
+  const top = data.recommendations[0];
+  const others = data.recommendations.slice(1);
+  const weather = data.weather_used || {};
+  const modelInput = weather.model_input || {};
+  const live = weather.live_conditions;
+  const forecast = weather.forecast_7day || [];
+
+  const agreementClass = (top.agreement || "").toLowerCase();
+  const agreementText = translate(
+    "agreement" + (top.agreement || "High"),
+    top.agreement + " agreement"
+  );
+
+  const stat = function (labelKey, labelFallback, value, unit) {
+    return `<div class="crop-stat">
+      <span>${translate(labelKey, labelFallback)}</span>
+      <strong>${escapeHtml(value)} <small>${escapeHtml(unit)}</small></strong>
+    </div>`;
+  };
+
+  const otherHtml = others.length
+    ? others.map(function (rec, index) {
+        const cls = (rec.agreement || "").toLowerCase();
+        const otherAgreement = translate(
+          "agreement" + (rec.agreement || "High"),
+          rec.agreement + " agreement"
+        );
+        return `<div class="crop-other-item">
+          <div class="crop-other-head">
+            <strong><span class="crop-rank">#${index + 2}</span> ${escapeHtml(rec.crop)}</strong>
+            <span class="crop-suit-pill">${escapeHtml(rec.suitability)}%</span>
+          </div>
+          <div class="crop-other-stats">
+            <span><b>${escapeHtml(rec.expected_yield)}</b> t/ha ${translate("cropExpectedShort", "expected")}</span>
+            <span><b>${escapeHtml(rec.historical_median)}</b> t/ha ${translate("cropMedianShort", "median")}</span>
+            <span><b>${escapeHtml(rec.years_of_evidence)}</b> ${translate("cropYearsShort", "years")}</span>
+            <span class="crop-agreement ${cls}">${escapeHtml(otherAgreement)}</span>
+          </div>
+        </div>`;
+      }).join("")
+    : `<p class="crop-muted">${translate("cropNoOther", "No other strong matches.")}</p>`;
+
+  const reasonsHtml = data.recommendations.map(function (rec, index) {
+    const items = (rec.reasons || []).map(function (reason) {
+      return `<li>${escapeHtml(reason)}</li>`;
+    }).join("");
+    return `<details class="crop-reason" ${index === 0 ? "open" : ""}>
+      <summary><span class="crop-rank">#${index + 1}</span> ${escapeHtml(rec.crop)}</summary>
+      <ul>${items}</ul>
+    </details>`;
+  }).join("");
+
+  const limitationsHtml = (data.limitations || []).map(function (item) {
+    return `<li>${escapeHtml(item)}</li>`;
+  }).join("");
+
+  const liveText = function (value, unit) {
+    return (value === null || value === undefined)
+      ? translate("cropUnavailable", "Unavailable")
+      : `${value} ${unit}`;
+  };
+
+  const forecastHtml = forecast.length
+    ? forecast.slice(0, 7).map(function (day) {
+        const date = new Date(`${day.date}T00:00:00`);
+        return `<div class="crop-forecast-day">
+          <span>${date.toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</span>
+          <b>${day.temp_min}°–${day.temp_max}°C</b>
+          <span>${day.precipitation} mm</span>
+        </div>`;
+      }).join("")
+    : `<p class="crop-muted">${translate("cropForecastUnavailable", "Live forecast unavailable.")}</p>`;
+
+  const modelInfo = data.model_info || {};
+  const weights = modelInfo.weights || {};
+  const metrics = modelInfo.metrics || {};
+  const modelRows = [
+    ["RandomForest", "Random Forest"],
+    ["XGBoost", "XGBoost"],
+    ["HistGradientBoosting", "HistGradientBoosting"],
+  ].map(function (pair) {
+    const name = pair[0];
+    const jsonKey = name === "RandomForest" ? "RandomForest" : name;
+    const metric = metrics[jsonKey] || {};
+    const weight = weights[name] === undefined ? "--" : (weights[name] * 100).toFixed(1) + "%";
+    const testMae = metric.MAE === undefined ? "--" : Number(metric.MAE).toFixed(3);
+    return `<tr>
+      <td>${pair[1]}</td>
+      <td>${escapeHtml(top.models[name])} t/ha</td>
+      <td>${weight}</td>
+      <td>${testMae} t/ha</td>
+    </tr>`;
+  }).join("");
+
+  box.innerHTML = `
+    <div class="crop-results-head">
+      <div>
+        <span class="crop-eyebrow">${translate("cropResultsEyebrow", "Recommendations")}</span>
+        <h4>${escapeHtml(data.district.name)}, ${escapeHtml(data.district.state)}</h4>
+      </div>
+      <span class="crop-season-badge">${escapeHtml(data.season)}</span>
+    </div>
+
+    <div class="crop-top-card">
+      <div>
+        <span class="crop-top-badge">${translate("cropTopPick", "Top pick")}</span>
+        <div class="crop-top-name">${escapeHtml(top.crop)}</div>
+        <p class="crop-top-sub">${translate("cropTopSub", "Highest predicted yield relative to this crop's own historical median.")}</p>
+      </div>
+      <div class="crop-suitability">
+        <strong>${escapeHtml(top.suitability)}%</strong>
+        <span>${translate("cropOfMedian", "of historical median")}</span>
+      </div>
+    </div>
+
+    <div class="crop-stat-grid">
+      ${stat("cropExpectedYield", "Expected yield", top.expected_yield, "t/ha")}
+      ${stat("cropHistoricalMedian", "Historical median", top.historical_median, "t/ha")}
+      ${stat("cropTypicalRange", "Typical range", `${top.historical_range.p25}–${top.historical_range.p75}`, "t/ha")}
+      ${stat("cropYearsEvidence", "Years of evidence", top.years_of_evidence, translate("cropYearsShort", "years"))}
+    </div>
+
+    <div class="crop-pill-row">
+      <span class="crop-agreement-pill ${agreementClass}">${escapeHtml(agreementText)}</span>
+      <span class="crop-hint">${translate("cropRankHint", "Ranked by suitability, never by raw yield across crops.")}</span>
+    </div>
+
+    <h4 class="crop-subheading">${translate("cropOtherMatches", "Other strong matches")}</h4>
+    <div class="crop-other-list">${otherHtml}</div>
+
+    <h4 class="crop-subheading">${translate("cropWhy", "Why these crops")}</h4>
+    <div class="crop-reasons">${reasonsHtml}</div>
+
+    <h4 class="crop-subheading">${translate("cropWeatherUsed", "Weather used")}</h4>
+    <div class="crop-weather-grid">
+      <div class="crop-weather-item"><span>🌡️</span><b>${modelInput.temperature} °C</b><small>${translate("cropSeasonalTemp", "Seasonal average")}</small></div>
+      <div class="crop-weather-item"><span>🌧️</span><b>${modelInput.rainfall} mm</b><small>${translate("cropSeasonalRain", "Seasonal total")}</small></div>
+      <div class="crop-weather-item"><span>📅</span><b>${(modelInput.years_used || []).length}</b><small>${translate("cropYearsUsed", "Years used")}</small></div>
+      <div class="crop-weather-item"><span>🌤️</span><b>${liveText(live && live.temperature, "°C")}</b><small>${translate("cropLiveTemp", "Live temperature")}</small></div>
+    </div>
+    <p class="crop-note">${escapeHtml(modelInput.note || "")}</p>
+    <div class="crop-live-weather">
+      <span>${translate("cropLiveConditions", "Live conditions")}:</span>
+      ${translate("cropHumidity", "Humidity")} ${liveText(live && live.humidity, "%")} ·
+      ${translate("cropPrecipitation", "Precipitation")} ${liveText(live && live.precipitation, "mm")} ·
+      ${translate("cropWind", "Wind")} ${liveText(live && live.wind_speed, "km/h")}
+    </div>
+    <div class="crop-forecast">${forecastHtml}</div>
+
+    <h4 class="crop-subheading">${translate("cropLimitations", "Read this before acting")}</h4>
+    <ul class="crop-limitations">${limitationsHtml}</ul>
+
+    <details class="crop-model-details">
+      <summary>${translate("cropModelDetails", "Model details")}</summary>
+      <table>
+        <thead><tr>
+          <th>${translate("cropModel", "Model")}</th>
+          <th>${translate("cropPrediction", "Prediction")}</th>
+          <th>${translate("cropWeight", "Weight")}</th>
+          <th>${translate("cropTestMae", "Test MAE")}</th>
+        </tr></thead>
+        <tbody>${modelRows}
+          <tr class="crop-ensemble-row">
+            <td>${translate("cropEnsemble", "Ensemble")}</td>
+            <td>${escapeHtml(top.models.Ensemble)} t/ha</td>
+            <td>${translate("cropUsedForRanking", "Used for ranking")}</td>
+            <td>${escapeHtml((metrics.Ensemble && Number(metrics.Ensemble.MAE).toFixed(3)) || "--")} t/ha</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="crop-note">${translate("cropModelNote", "Test metrics come from held-out years 2010–2011, the most recent in the dataset.")}</p>
+    </details>
+  `;
+}
 
 
 // ================= TELEMEDICINE =================
@@ -730,7 +989,7 @@ async function loadAdminDashboard() {
 
   const activityResult = await safeFetch(`${API_URL}/admin/activity`, { headers });
   const activityLabels = {
-    crop_prediction: "Crop Predictions", telemedicine_query: "Telemedicine Queries",
+    crop_prediction: "Crop Recommendations", telemedicine_query: "Telemedicine Queries",
     scheme_check: "Scheme Checks", water_check: "Water Checks",
     disaster_check: "Disaster Checks", chat_message: "Chat Messages",
   };

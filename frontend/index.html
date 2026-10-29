@@ -36,7 +36,7 @@
   <nav id="tabNav">
     <div class="tab-nav-inner">
       <button class="tab-btn active" data-tab="dashboard" data-i18n="navDashboard">Dashboard</button>
-      <button class="tab-btn" data-tab="crop" data-i18n="navCrop">Crop Prediction</button>
+      <button class="tab-btn" data-tab="crop" data-i18n="navCrop">Crop Recommendation</button>
       <button class="tab-btn" data-tab="telemedicine" data-i18n="navTele">Telemedicine</button>
       <button class="tab-btn" data-tab="schemes" data-i18n="navSchemes">Govt. Schemes</button>
       <button class="tab-btn" data-tab="water" data-i18n="navWater">Water Management</button>
@@ -64,7 +64,7 @@
       <div class="card-grid">
         <div class="card" data-goto="crop">
           <div class="card-icon-badge badge-crop">🌱</div>
-          <h3 data-i18n="cardCropTitle">Crop Prediction</h3>
+          <h3 data-i18n="cardCropTitle">Crop Recommendation</h3>
           <p data-i18n="cardCropDesc">Estimate crop yield from rainfall, pesticide use, and temperature.</p>
         </div>
         <div class="card" data-goto="telemedicine">
@@ -95,30 +95,25 @@
       </div>
     </section>
 
-    <!-- ================= CROP PREDICTION TAB ================= -->
+    <!-- ================= CROP RECOMMENDATION TAB ================= -->
     <section id="crop" class="tab-section">
-      <h2 data-i18n="cropHeading">Crop Yield Prediction</h2>
-      <p class="section-desc" data-i18n="cropDesc">Predicts upcoming yield based on current conditions.</p>
+      <h2 data-i18n="cropHeading">Crop Recommendation</h2>
+      <p class="section-desc" data-i18n="cropDesc">Recommends the best crops for your district and planting season using historical yield data, weather, and three ML models.</p>
 
-      <form id="cropForm">
-        <label for="area" data-i18n="labelArea">Country/Area (type to search)</label>
-        <input type="text" id="area" list="areaOptions" autocomplete="off" required>
-        <datalist id="areaOptions"></datalist>
+      <form id="cropForm" autocomplete="off">
+        <label for="districtSearch" data-i18n="labelDistrict">District</label>
+        <div class="autocomplete">
+          <input type="text" id="districtSearch" placeholder="Type a district name…" data-i18n-placeholder="districtPlaceholder" required>
+          <div id="districtSuggestions" class="suggestions-dropdown"></div>
+        </div>
+        <input type="hidden" id="districtId">
 
-        <label for="cropType" data-i18n="labelCrop">Crop</label>
-        <input type="text" id="cropType" list="cropOptions" autocomplete="off" required>
-        <datalist id="cropOptions"></datalist>
+        <label for="seasonSelect" data-i18n="labelSeason">Planting Season</label>
+        <select id="seasonSelect" required>
+          <option value="" data-i18n="seasonPlaceholder">Select a season</option>
+        </select>
 
-        <label for="rainfall" data-i18n="labelRainfall">Average Rainfall (mm/year)</label>
-        <input type="number" id="rainfall" step="0.1" placeholder="e.g. 1200" required>
-
-        <label for="pesticides" data-i18n="labelPesticides">Pesticides Used (tonnes)</label>
-        <input type="number" id="pesticides" step="0.1" placeholder="e.g. 50" required>
-
-        <label for="temperature" data-i18n="labelTemperature">Average Temperature (°C)</label>
-        <input type="number" id="temperature" step="0.1" placeholder="e.g. 25" required>
-
-        <button type="submit" data-i18n="btnPredict">Predict Yield</button>
+        <button type="submit" id="recommendBtn" disabled data-i18n="btnRecommend">Get Recommendations</button>
       </form>
 
       <div id="cropResult" class="result-box"></div>

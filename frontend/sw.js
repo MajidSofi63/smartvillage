@@ -1,6 +1,6 @@
-const CACHE_NAME = "smart-village-v3";
+const CACHE_NAME = "smart-village-v4";
 const APP_SHELL_FILES = ["/", "/style.css", "/script.js", "/translations.js", "/manifest.json"];
-const CACHEABLE_API_PATHS = ["/options", "/workers", "/employment/stats"];
+const CACHEABLE_API_PATHS = ["/api/districts", "/api/seasons", "/workers", "/employment/stats"];
 
 self.addEventListener("install", function (event) {
   event.waitUntil(
