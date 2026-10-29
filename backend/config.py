@@ -8,12 +8,24 @@
 # ON RENDER: set these same variable names in the dashboard under Environment.
 
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
-load_dotenv()  # reads a local .env file if one exists
+# Always look for backend/.env first, then fall back to the working directory.
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+load_dotenv()
 
 WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY", "PUT_YOUR_OPENWEATHER_API_KEY_HERE")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "PUT_YOUR_GEMINI_API_KEY_HERE")
+
+# Optional Gemini settings. The model name can be changed without editing code;
+# set GEMINI_ENABLED=false to turn every Gemini call off.
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+GEMINI_ENABLED = os.environ.get("GEMINI_ENABLED", "true").strip().lower() not in (
+    "0", "false", "no", "off",
+)
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://your-project.supabase.co")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "your-anon-key-here")

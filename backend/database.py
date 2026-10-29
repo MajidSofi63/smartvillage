@@ -14,11 +14,16 @@
 # fill it in) - everything below then works identically locally and once deployed.
 
 import os
+from pathlib import Path
+
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
 
-load_dotenv()  # reads a local .env file if one exists (ignored by git - see .gitignore)
+# Always look for backend/.env first, then fall back to the working directory.
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+load_dotenv()
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 

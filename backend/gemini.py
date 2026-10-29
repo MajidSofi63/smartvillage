@@ -3,23 +3,33 @@
 #   1. The floating chat assistant (ask_gemini)
 #   2. Enhancing + translating telemedicine advice (get_telemedicine_advice)
 #
-# NOTE ON THE MODEL NAME: Google deprecates these fast. gemini-2.0-flash and
-# then gemini-2.5-flash both stopped working for new users within months of
-# each other. Currently using gemini-3.6-flash per Google's own error message
-# recommendation. If this breaks again, check https://ai.google.dev/gemini-api/docs/models
-# for the current model name and swap it into MODEL_NAME below - nothing else needs to change.
+# NOTE ON THE MODEL NAME: Google deprecates these fast. The model is read from
+# GEMINI_MODEL in .env (default: gemini-3.6-flash). If it stops working, check
+# https://ai.google.dev/gemini-api/docs/models for a current name and update
+# .env - no code change is needed.
+
+import threading
 
 import requests
-from config import GEMINI_API_KEY
+from config import GEMINI_API_KEY, GEMINI_ENABLED, GEMINI_MODEL
 
-MODEL_NAME = "gemini-3.6-flash"
+MODEL_NAME = GEMINI_MODEL
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
 
 LANGUAGE_NAMES = {"en": "English", "hi": "Hindi", "ur": "Urdu"}
 
+
+def is_configured():
+    """True when Gemini is enabled and a real key has been supplied."""
+    return (
+        GEMINI_ENABLED
+        and bool(GEMINI_API_KEY)
+        and not GEMINI_API_KEY.startswith("PUT_YOUR")
+    )
+
 SYSTEM_CONTEXT = (
     "You are the assistant for the AI Smart Village Platform, a rural-services web app "
-    "with six tabs: Crop Prediction, Telemedicine, Government Schemes, Water Management, "
+    "with six tabs: Crop Recommendation, Telemedicine, Government Schemes, Water Management, "
     "Disaster Alerts, and Employment. Answer the user's question briefly and, where useful, "
     "tell them which tab to use for the actual tool. Never give a medical diagnosis - always "
     "recommend seeing a doctor for health questions. Keep answers short and simple, rural "
@@ -61,28 +71,74 @@ def ask_gemini(user_message):
     return reply
 
 
-def get_crop_explanation(area, crop, rainfall, pesticides, temperature, predicted_yield, language_code):
+# Cache rewritten crop reasons so repeat requests for the same district/season
+# do not pay for another Gemini call.
+_crop_reason_cache = {}
+_crop_reason_cache_lock = threading.Lock()
+
+
+def get_crop_recommendation_reasons(facts, language_code):
     """
-    Explains a crop yield prediction in plain language: whether it's high/low,
-    what's likely driving it, and how to improve it - written in the user's language.
-    The NUMBER always comes from the trained ML model, never from Gemini - this only
-    interprets and advises around a number that has already been computed.
+    Rewrite the computed crop-recommendation facts as 3-5 short bullet points
+    in the user's language. Returns None when Gemini is unavailable or ignores
+    the format, so the caller can keep the deterministic reasons.
+
+    Gemini is only allowed to reword facts that were already computed; it must
+    never add numbers or claims of its own.
     """
     language_name = LANGUAGE_NAMES.get(language_code, "English")
+    cache_key = f"{language_code}:{facts}"
+
+    if not is_configured():
+        return None
+
+    with _crop_reason_cache_lock:
+        cached = _crop_reason_cache.get(cache_key)
+    if cached is not None:
+        return cached
 
     prompt = (
-        f"A machine learning model predicted a crop yield of {predicted_yield} hg/ha for {crop} "
-        f"in {area}, given: average rainfall {rainfall}mm/year, pesticide use {pesticides} tonnes, "
-        f"average temperature {temperature}°C. Explain to a farmer, in {language_name}, in under 100 words: "
-        f"(1) whether this yield seems high, average, or low for this crop, (2) which input factor "
-        f"(rainfall, pesticide use, or temperature) most likely helped or hurt it, and (3) two concrete, "
-        f"practical suggestions to improve next season's yield. Keep language simple, no jargon."
+        "Rewrite the following computed crop-recommendation facts as 3-5 short, "
+        f"plain-language bullet points in {language_name}. Do not add any facts, "
+        "numbers, or claims that are not present. Do not mention profit or "
+        "guarantees. Return only the bullet points, each starting with '- '.\n\n"
+        + facts
     )
 
     reply = _call_gemini(prompt)
     if reply is None:
-        return "AI explanation unavailable right now - showing the raw prediction only."
-    return reply
+        return None
+
+    # Keep only explicit bullet lines so a preamble is not shown as a reason.
+    bullets = []
+    for line in reply.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("-", "*", "•")):
+            cleaned = stripped.lstrip("-*• ").replace("**", "").strip()
+            if cleaned:
+                bullets.append(cleaned)
+
+    # If the model ignored the bullet format, drop a one-line preamble.
+    if not bullets:
+        lines = [
+            line.strip().replace("**", "")
+            for line in reply.splitlines()
+            if line.strip()
+        ]
+        if len(lines) > 1 and lines[0].endswith(":"):
+            lines = lines[1:]
+        bullets = lines
+
+    result = bullets[:5]
+    if len(result) < 3:
+        return None
+
+    with _crop_reason_cache_lock:
+        # Keep the cache small on a long-running server.
+        if len(_crop_reason_cache) > 500:
+            _crop_reason_cache.clear()
+        _crop_reason_cache[cache_key] = result
+    return result
 
 
 def get_telemedicine_advice(symptoms, local_condition, local_advice, urgent, language_code):

@@ -12,6 +12,9 @@ import os
 
 # our own modules, one per platform feature
 import crop_model
+import crop_db
+import crop_recommendation
+import crop_weather
 import telemedicine
 import schemes
 import water
@@ -37,6 +40,13 @@ app.add_middleware(
 def startup():
     # creates every table the first time the server ever runs - safe to call every time
     database.init_db()
+    # crop recommendation tables live alongside the platform tables
+    try:
+        crop_db.init_crop_tables()
+    except Exception as exc:
+        # The rest of the platform must still start if the crop tables cannot be
+        # created yet (for example, before DATABASE_URL is configured).
+        print(f"[WARNING] Could not create crop tables: {exc}")
 
 
 # ---------- Auth dependencies ----------
@@ -66,12 +76,9 @@ def require_admin(x_admin_password: str = Header(...)):
 
 # ---------- Request data shapes (what the frontend must send us) ----------
 
-class CropRequest(BaseModel):
-    area: str
-    crop: str
-    rainfall: float
-    pesticides: float
-    temperature: float
+class RecommendCropRequest(BaseModel):
+    district_id: int
+    season: str
     language: str = "en"
 
 
@@ -156,36 +163,90 @@ class ChatRequest(BaseModel):
 
 # ---------- Routes ----------
 
-# --- Crop Prediction (number from the ML model, explanation from Gemini) ---
+# --- Crop Recommendation (district + season -> ranked crops from ML ensemble) ---
 
-@app.get("/options")
-def get_options():
-    return {
-        "areas": crop_model.get_available_areas(),
-        "crops": crop_model.get_available_crops(),
-    }
+@app.get("/api/districts")
+def get_crop_districts(q: str = ""):
+    """Return up to 15 districts matching the search text."""
+    try:
+        districts = crop_db.search_districts(q.strip() if q else "")
+        return {"districts": districts, "count": len(districts)}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Crop database error: {exc}")
 
 
-@app.post("/predict-crop")
-def predict_crop(request: CropRequest):
-    predicted = crop_model.predict_yield(
-        area=request.area,
-        crop=request.crop,
-        rainfall=request.rainfall,
-        pesticides=request.pesticides,
-        temperature=request.temperature,
+@app.get("/api/seasons")
+def get_crop_seasons():
+    """Return the planting seasons present in the loaded crop data."""
+    try:
+        return {"seasons": crop_db.get_seasons()}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Crop database error: {exc}")
+
+
+@app.post("/api/recommend")
+def recommend_crops(request: RecommendCropRequest):
+    """Recommend and rank crops for one Indian district and planting season."""
+    # Refuse to guess before the trained artefacts have loaded.
+    if not crop_model.model_service.is_ready():
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Crop recommendation models are not loaded. Check "
+                "backend/models/crop_recommendation/ and the pinned package versions."
+            ),
+        )
+
+    # Load the district and the dataset's latest year.
+    try:
+        district = crop_db.get_district(request.district_id)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Crop database error: {exc}")
+
+    if district is None:
+        raise HTTPException(status_code=404, detail="District not found")
+
+    # Every historical row for this district-season in one query.
+    try:
+        history_rows = crop_db.get_history(request.district_id, request.season)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Crop database error: {exc}")
+
+    if not history_rows:
+        raise HTTPException(
+            status_code=404,
+            detail="No historical crop data for this district and season",
+        )
+
+    # Live weather is display-only; a failure never blocks the recommendation.
+    live_weather = crop_weather.weather_service.get_live_weather_and_forecast(
+        district["lat"], district["lon"]
     )
-    if predicted is None:
-        return {"success": False, "message": "Area or crop not recognised by the model."}
 
-    explanation = gemini.get_crop_explanation(
-        area=request.area, crop=request.crop, rainfall=request.rainfall,
-        pesticides=request.pesticides, temperature=request.temperature,
-        predicted_yield=predicted, language_code=request.language,
-    )
+    try:
+        payload = crop_recommendation.build_recommendations(
+            district,
+            request.season,
+            history_rows,
+            crop_model.model_service,
+            live_weather,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
 
+    # Optionally rewrite ONLY the top crop's reasons, once per request.
+    top_recommendations = payload["recommendations"]
+    if top_recommendations and gemini.is_configured():
+        rewritten = gemini.get_crop_recommendation_reasons(
+            "\n".join(top_recommendations[0]["reasons"]),
+            request.language,
+        )
+        if rewritten:
+            top_recommendations[0]["reasons"] = rewritten
+
+    payload["model_info"] = crop_model.model_service.get_model_info()
     analytics.log_event("crop_prediction")
-    return {"success": True, "predicted_yield_hg_per_ha": predicted, "explanation": explanation}
+    return payload
 
 
 # --- Telemedicine ---
