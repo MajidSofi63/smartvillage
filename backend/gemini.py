@@ -9,14 +9,25 @@
 # .env - no code change is needed.
 
 import threading
-
 import requests
 from config import GEMINI_API_KEY, GEMINI_ENABLED, GEMINI_MODEL
 
 MODEL_NAME = GEMINI_MODEL
+FALLBACK_MODELS = [MODEL_NAME, "gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"]
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
 
 LANGUAGE_NAMES = {"en": "English", "hi": "Hindi", "ur": "Urdu"}
+
+# Initialize google-genai client if installed
+_genai_client = None
+try:
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning, module="google.genai")
+    from google import genai
+    if GEMINI_API_KEY and not GEMINI_API_KEY.startswith("PUT_YOUR"):
+        _genai_client = genai.Client(api_key=GEMINI_API_KEY)
+except Exception:
+    _genai_client = None
 
 
 def is_configured():
@@ -39,28 +50,55 @@ SYSTEM_CONTEXT = (
 
 def _call_gemini(prompt_text):
     """
-    Low-level helper: sends one prompt to Gemini and returns the reply text,
-    or None if the call failed for any reason (bad key, model down, etc.).
+    Sends one prompt to Gemini and returns the reply text,
+    or None if the call failed for any reason.
+    Tries google-genai SDK first, then REST API fallback.
     """
+    if not is_configured():
+        return None
+
+    # Method 1: Google GenAI SDK (preferred & recommended by Google)
+    global _genai_client
+    if _genai_client is None:
+        try:
+            from google import genai
+            _genai_client = genai.Client(api_key=GEMINI_API_KEY)
+        except Exception:
+            _genai_client = None
+
+    if _genai_client is not None:
+        for model in FALLBACK_MODELS:
+            try:
+                res = _genai_client.models.generate_content(model=model, contents=prompt_text)
+                if res and res.text:
+                    return res.text
+            except Exception as exc:
+                err_str = str(exc)
+                if "503" in err_str or "UNAVAILABLE" in err_str or "404" in err_str:
+                    continue  # try next fallback model
+                print(f"Gemini SDK error ({model}): {err_str[:200]}")
+                break
+
+    # Method 2: REST fallback
     headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
     payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
 
     try:
-        response = requests.post(GEMINI_URL, headers=headers, json=payload, timeout=15)
-    except requests.exceptions.RequestException:
-        return None  # network problem (no internet, DNS failure, etc.)
+        response = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent?key={GEMINI_API_KEY}",
+            headers=headers,
+            json=payload,
+            timeout=10,
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+        else:
+            print(f"Gemini REST API error {response.status_code}: {response.text[:200]}")
+    except Exception as exc:
+        print(f"Gemini request exception: {exc}")
 
-    if response.status_code != 200:
-        # Printing this helps you see the REAL reason in the terminal running uvicorn
-        # (e.g. 400 = bad request, 403 = bad API key, 404 = model name wrong)
-        print(f"Gemini API error {response.status_code}: {response.text[:300]}")
-        return None
-
-    data = response.json()
-    try:
-        return data["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError):
-        return None
+    return None
 
 
 def ask_gemini(user_message):

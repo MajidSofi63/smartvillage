@@ -9,7 +9,7 @@
 # analytics write should NEVER break the actual feature someone is using.
 # Losing one usage count is fine; breaking crop prediction over it is not.
 
-from datetime import datetime
+from datetime import datetime, timezone
 from database import get_connection
 
 
@@ -23,7 +23,7 @@ def log_event(event_type):
         conn = get_connection()
         conn.execute(
             "INSERT INTO usage_events (event_type, created_at) VALUES (?, ?)",
-            (event_type, datetime.utcnow().isoformat())
+            (event_type, datetime.now(timezone.utc).isoformat())
         )
         conn.commit()
         conn.close()

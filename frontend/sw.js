@@ -1,4 +1,4 @@
-const CACHE_NAME = "smart-village-v4";
+const CACHE_NAME = "smart-village-v5";
 const APP_SHELL_FILES = ["/", "/style.css", "/script.js", "/translations.js", "/manifest.json"];
 const CACHEABLE_API_PATHS = ["/api/districts", "/api/seasons", "/workers", "/employment/stats"];
 
@@ -27,14 +27,21 @@ self.addEventListener("fetch", function (event) {
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
   const isApi = CACHEABLE_API_PATHS.some(p => url.pathname === p);
-  event.respondWith(isApi ? networkFirstThenCache(request) : cacheFirstThenNetwork(request));
+  // Always prefer the network for the app shell and API so a new deployment is
+  // picked up immediately. The cache is only an offline fallback.
+  const isAppShell = APP_SHELL_FILES.includes(url.pathname);
+  event.respondWith(
+    (isApi || isAppShell) ? networkFirstThenCache(request) : cacheFirstThenNetwork(request)
+  );
 });
 
 async function networkFirstThenCache(request) {
   try {
     const res = await fetch(request);
-    const cache = await caches.open(CACHE_NAME);
-    cache.put(request, res.clone());
+    if (res && res.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, res.clone());
+    }
     return res;
   } catch (err) {
     const cached = await caches.match(request);

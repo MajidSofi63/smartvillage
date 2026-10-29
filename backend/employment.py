@@ -1,17 +1,17 @@
-import psycopg2
-from datetime import datetime
+from datetime import datetime, timezone
 from database import get_connection
 
 
 def save_worker_profile(worker_id, name, email, phone, location, skills, bio):
     conn = get_connection()
+    now_iso = datetime.now(timezone.utc).isoformat()
     conn.execute("""
         INSERT INTO worker_profiles (id, name, email, phone, location, skills, bio, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email,
             phone = EXCLUDED.phone, location = EXCLUDED.location,
             skills = EXCLUDED.skills, bio = EXCLUDED.bio
-    """, (worker_id, name, email, phone, location, skills.lower(), bio, datetime.utcnow().isoformat()))
+    """, (str(worker_id), name, email, phone, location, skills.lower(), bio, now_iso))
     conn.commit()
     conn.close()
 
@@ -21,14 +21,14 @@ def update_worker_profile(worker_id, name, phone, location, skills, bio):
     conn.execute("""
         UPDATE worker_profiles SET name = ?, phone = ?, location = ?, skills = ?, bio = ?
         WHERE id = ?
-    """, (name, phone, location, skills.lower(), bio, worker_id))
+    """, (name, phone, location, skills.lower(), bio, str(worker_id)))
     conn.commit()
     conn.close()
 
 
 def get_worker_profile(worker_id):
     conn = get_connection()
-    row = conn.execute("SELECT * FROM worker_profiles WHERE id = ?", (worker_id,)).fetchone()
+    row = conn.execute("SELECT * FROM worker_profiles WHERE id = ?", (str(worker_id),)).fetchone()
     conn.close()
     if row is None:
         return None
@@ -38,7 +38,7 @@ def get_worker_profile(worker_id):
 
 def delete_worker_profile(worker_id):
     conn = get_connection()
-    conn.execute("DELETE FROM worker_profiles WHERE id = ?", (worker_id,))
+    conn.execute("DELETE FROM worker_profiles WHERE id = ?", (str(worker_id),))
     conn.commit()
     conn.close()
 
@@ -47,7 +47,7 @@ def list_public_feed():
     conn = get_connection()
     rows = conn.execute("SELECT * FROM worker_profiles ORDER BY created_at DESC").fetchall()
     conn.close()
-    return [{"id": r["id"], "name": r["name"], "phone": r["phone"], "location": r["location"],
+    return [{"id": str(r["id"]), "name": r["name"], "phone": r["phone"], "location": r["location"],
              "skills": r["skills"], "bio": r["bio"]} for r in rows]
 
 
@@ -62,5 +62,5 @@ def list_all_workers():
     conn = get_connection()
     rows = conn.execute("SELECT * FROM worker_profiles ORDER BY name").fetchall()
     conn.close()
-    return [{"id": r["id"], "name": r["name"], "email": r["email"], "phone": r["phone"],
+    return [{"id": str(r["id"]), "name": r["name"], "email": r["email"], "phone": r["phone"],
              "location": r["location"], "skills": r["skills"], "bio": r["bio"]} for r in rows]

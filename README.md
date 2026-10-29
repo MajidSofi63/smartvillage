@@ -76,6 +76,14 @@ Use `--keep` to upsert instead of truncating the two crop tables, or
 
 ### 4. Run the app
 
+From the project root:
+
+```powershell
+python run.py
+```
+
+Or from the `backend/` directory:
+
 ```powershell
 cd backend
 uvicorn main:app --reload
@@ -87,7 +95,68 @@ Open <http://127.0.0.1:8000>. The backend also serves the frontend from
 The server starts even if the crop tables are empty or the models fail to load;
 the crop tab returns a clear error until setup is complete.
 
+## Deploy on Render
+
+Deploy **one Web Service** that serves both the API and the frontend. Do not
+create a separate Static Site for `frontend/`.
+
+Use these service settings:
+
+| Setting | Value |
+| --- | --- |
+| Type | **Web Service** (not Static Site) |
+| Root Directory | `backend` |
+| Build Command | `pip install --upgrade pip && pip install -r requirements.txt` |
+| Start Command | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| Health Check Path | `/health` |
+| `PYTHON_VERSION` env var | `3.12.10` |
+
+`PYTHON_VERSION=3.12.10` is required: the pinned `scikit-learn==1.5.2` does not
+support Render's newer default Python versions, so the build otherwise fails.
+
+Add the same environment variables from `backend/.env` in the Render dashboard
+(`DATABASE_URL`, `GEMINI_API_KEY`, etc.). `.env` is git-ignored and is **not**
+uploaded automatically.
+
+The repository includes `render.yaml` (a Render Blueprint) and
+`.python-version` files so a new Blueprint deploy uses these settings
+automatically. If the service already exists, apply the settings above manually
+in **Settings**, then redeploy.
+
+After deployment, visit `https://<your-service>.onrender.com/health`. It reports
+whether the models loaded and whether the crop tables are reachable, without
+exposing secrets.
+
+If the page loads but the crop tab shows a backend error, the message now
+includes the real reason (for example a database connection error) instead of
+only saying "Can't reach the backend".
+
+### Empty seasons on Render
+
+If `https://<your-service>.onrender.com/api/seasons` returns
+`{"seasons":[]}`, the backend is running but its `DATABASE_URL` points to a
+database where the crop tables are empty.
+
+Either:
+
+1. Set Render's `DATABASE_URL` to the same value as your local
+   `backend/.env` (the database with `districts` / `crop_stats` loaded), or
+2. Keep Render's existing database and load the crop data into it:
+
+   ```powershell
+   $env:DATABASE_URL = "paste-the-render-database-url-here"
+   python backend\load_crop_data.py
+   ```
+
+The loader only truncates/reloads `districts` and `crop_stats`; it does not
+touch `worker_profiles` or `usage_events`.
+
+After the first deploy of the crop UI, users with an old service worker may
+still see the previous frontend. Clear the site data once (DevTools →
+Application → Storage → Clear site data) or test in a private window.
+
 ## API
+
 
 | Method | Path | Purpose |
 | --- | --- | --- |

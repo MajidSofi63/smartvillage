@@ -15,9 +15,28 @@ FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 
 
 def _geocode(city_name):
-    """Turns a city/village name into latitude/longitude using Open-Meteo's free geocoder."""
+    """Turns a city/village name into latitude/longitude using local database or Open-Meteo."""
+    cleaned = city_name.strip()
+    if not cleaned:
+        return None
+
+    # 1. First check our database of 666 Indian districts (instant & accurate)
     try:
-        response = requests.get(GEOCODE_URL, params={"name": city_name, "count": 1}, timeout=10)
+        from database import get_connection
+        conn = get_connection()
+        row = conn.execute(
+            "SELECT district, state, lat, lon FROM districts WHERE district ILIKE %s LIMIT 1",
+            (f"%{cleaned}%",)
+        ).fetchone()
+        conn.close()
+        if row:
+            return {"lat": row["lat"], "lon": row["lon"], "name": f"{row['district'].title()}, {row['state']}"}
+    except Exception:
+        pass
+
+    # 2. Fall back to Open-Meteo geocoding for any other city / town
+    try:
+        response = requests.get(GEOCODE_URL, params={"name": cleaned, "count": 1}, timeout=10)
     except requests.exceptions.RequestException:
         return None  # no internet / DNS failure / timeout
 

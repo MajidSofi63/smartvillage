@@ -4,6 +4,7 @@ requests
 psycopg2-binary
 python-dotenv
 email-validator
+google-genai
 
 # Crop recommendation model artefacts were trained with these exact versions.
 # Keep them pinned: HistGradientBoosting cannot be unpickled by scikit-learn 1.9+.

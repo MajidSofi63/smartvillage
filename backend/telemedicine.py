@@ -5,9 +5,15 @@
 # they should seek care and what basic first-aid to do in the meantime.
 
 import json  # to read the medical_data.json file
+from pathlib import Path
 
 # Load the medical knowledge base once when the server starts
-with open("../data/medical_data.json", "r") as f:
+_BASE_DIR = Path(__file__).resolve().parent
+_DATA_FILE = _BASE_DIR.parent / "data" / "medical_data.json"
+if not _DATA_FILE.exists():
+    _DATA_FILE = _BASE_DIR / "data" / "medical_data.json"
+
+with open(_DATA_FILE, "r", encoding="utf-8") as f:
     medical_data = json.load(f)
 
 # This disclaimer is attached to every single response, no matter what condition is found.

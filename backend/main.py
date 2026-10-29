@@ -26,7 +26,22 @@ import auth
 import analytics
 from config import ADMIN_PASSWORD
 
-app = FastAPI(title="AI Smart Village Platform")
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # creates every table the first time the server ever runs - safe to call every time
+    database.init_db()
+    # crop recommendation tables live alongside the platform tables
+    try:
+        crop_db.init_crop_tables()
+    except Exception as exc:
+        print(f"[WARNING] Could not create crop tables: {exc}")
+    yield
+
+
+app = FastAPI(title="AI Smart Village Platform", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,19 +49,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def startup():
-    # creates every table the first time the server ever runs - safe to call every time
-    database.init_db()
-    # crop recommendation tables live alongside the platform tables
-    try:
-        crop_db.init_crop_tables()
-    except Exception as exc:
-        # The rest of the platform must still start if the crop tables cannot be
-        # created yet (for example, before DATABASE_URL is configured).
-        print(f"[WARNING] Could not create crop tables: {exc}")
 
 
 # ---------- Auth dependencies ----------
@@ -249,6 +251,33 @@ def recommend_crops(request: RecommendCropRequest):
     return payload
 
 
+# --- Health check (useful on Render) ---
+
+@app.get("/health")
+def health():
+    """Report model and database readiness without exposing any secrets."""
+    result = {
+        "status": "ok",
+        "models_ready": crop_model.model_service.is_ready(),
+        "models_error": crop_model.model_service.error,
+    }
+    try:
+        conn = database.get_connection()
+        try:
+            districts = conn.execute("SELECT COUNT(*) AS count FROM districts").fetchone()
+            stats = conn.execute("SELECT COUNT(*) AS count FROM crop_stats").fetchone()
+            result["database"] = "ok"
+            result["districts"] = districts["count"]
+            result["crop_stats"] = stats["count"]
+        finally:
+            conn.close()
+    except Exception as exc:
+        result["status"] = "degraded"
+        result["database"] = "error"
+        result["database_error"] = str(exc)[:300]
+    return result
+
+
 # --- Telemedicine ---
 
 @app.post("/telemedicine")
@@ -377,6 +406,7 @@ def delete_my_profile(worker_id: str = Depends(get_current_worker)):
 # on load and shows the admin view only when it matches.
 
 @app.get("/admin")
+@app.get("/admin/")
 def serve_admin_page():
     # hands back the same index.html the rest of the site uses - script.js then
     # notices the URL is /admin and switches straight to the admin view

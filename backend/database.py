@@ -91,5 +91,19 @@ def init_db():
         )
     """)
 
+    # Local worker accounts table (fallback when Supabase auth is not configured)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS worker_accounts (
+            id UUID PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT NOT NULL DEFAULT '',
+            location TEXT NOT NULL DEFAULT '',
+            skills TEXT NOT NULL DEFAULT '',
+            role TEXT NOT NULL DEFAULT 'worker',
+            created_at TEXT NOT NULL DEFAULT ''
+        )
+    """)
+
     conn.commit()
     conn.close()

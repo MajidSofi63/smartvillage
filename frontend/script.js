@@ -108,10 +108,12 @@ function showResult(boxId, html, style) {
   box.className = "result-box visible " + style;
 }
 
-function setConnectionWarning(isDown) {
+function setConnectionWarning(isDown, detail) {
   const banner = document.getElementById("connectionWarning");
   banner.classList.toggle("visible", isDown);
-  banner.textContent = "Can't reach the backend. Make sure the server is running: uvicorn main:app --reload";
+  banner.textContent = detail
+    ? `Backend error: ${detail}`
+    : "Can't reach the backend. Please check your connection and try again.";
 }
 
 
@@ -123,7 +125,7 @@ window.onload = async function () {
   handlePasswordRecoveryLink(); // if they arrived from a reset email, show the "new password" form
 
   // Admin is deliberately not in the nav bar - only reachable by visiting /admin directly
-  if (window.location.pathname === "/admin") {
+  if (window.location.pathname === "/admin" || window.location.pathname === "/admin/" || window.location.pathname.endsWith("/admin")) {
     showTab("admin");
   }
 
@@ -156,7 +158,7 @@ function escapeHtml(value) {
 async function loadCropSeasons() {
   const result = await safeFetch(`${API_URL}/api/seasons`);
   if (!result.ok) {
-    setConnectionWarning(true);
+    setConnectionWarning(true, result.errorMessage);
     return;
   }
   setConnectionWarning(false);

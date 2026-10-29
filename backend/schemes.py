@@ -3,8 +3,14 @@
 # schemes.json dataset and returns only the schemes they are actually eligible for.
 
 import json  # to read the schemes.json file
+from pathlib import Path
 
-with open("../data/schemes.json", "r") as f:
+_BASE_DIR = Path(__file__).resolve().parent
+_DATA_FILE = _BASE_DIR.parent / "data" / "schemes.json"
+if not _DATA_FILE.exists():
+    _DATA_FILE = _BASE_DIR / "data" / "schemes.json"
+
+with open(_DATA_FILE, "r", encoding="utf-8") as f:
     schemes_data = json.load(f)
 
 
