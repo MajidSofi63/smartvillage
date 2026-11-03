@@ -250,11 +250,15 @@ function renderCropRecommendation(data) {
 
   const otherHtml = others.length
     ? others.map(function (rec, index) {
+        const detailHtml = rec.ai_detail
+          ? `<p class="crop-other-detail">${escapeHtml(rec.ai_detail)}</p>`
+          : "";
         return `<div class="crop-other-item">
           <div class="crop-other-head">
             <strong><span class="crop-rank">#${index + 2}</span> ${escapeHtml(rec.crop)}</strong>
             <span class="crop-suit-pill">${escapeHtml(rec.suitability)}%</span>
           </div>
+          ${detailHtml}
         </div>`;
       }).join("")
     : `<p class="crop-muted">${translate("cropNoOther", "No other strong matches.")}</p>`;
@@ -280,6 +284,7 @@ function renderCropRecommendation(data) {
       <div>
         <span class="crop-top-badge">${translate("cropTopPick", "Top pick")}</span>
         <div class="crop-top-name">${escapeHtml(top.crop)}</div>
+        ${top.ai_detail ? `<p class="crop-ai-detail">${escapeHtml(top.ai_detail)}</p>` : ""}
         <p class="crop-top-sub">${translate("cropTopSub", "Highest predicted yield relative to this crop's own historical median.")}</p>
       </div>
       <div class="crop-suitability">

@@ -9,6 +9,7 @@
 # .env - no code change is needed.
 import threading
 import time
+import re
 import requests
 from config import GEMINI_API_KEY, GEMINI_ENABLED, GEMINI_MODEL
 
@@ -128,29 +129,30 @@ def ask_gemini(user_message):
     return reply
 
 
-# Cache crop summaries so repeat requests for the same district/season do not
+# Cache crop insights so repeat requests for the same district/season do not
 # pay for another Gemini call.
-_crop_summary_cache = {}
-_crop_summary_cache_lock = threading.Lock()
+_crop_insights_cache = {}
+_crop_insights_cache_lock = threading.Lock()
 
 # After a failed call, skip Gemini for a short while so every request does not
 # pay the timeout again. Reset automatically once the window passes.
-_crop_summary_failure_until = 0.0
+_crop_insights_failure_until = 0.0
 
 
-def get_crop_recommendation_summary(district, state, season, recommendations):
+def get_crop_recommendation_insights(district, state, season, recommendations):
     """
-    Turn the computed crop ranking into a short, plain-language explanation of
-    why the top crops suit this district and season.
+    Turn the computed crop ranking into a short overall explanation plus one
+    plain-language detail line for every recommended crop.
 
-    Returns None when Gemini is unavailable, so the caller can fall back to the
-    deterministic reasons already built by crop_recommendation.py. Gemini may
-    only reword facts that were computed - it must never add numbers or claims
-    of its own.
+    Returns a dict like {"summary": str|None, "details": {crop: str}}, or None
+    when Gemini is unavailable. The caller keeps the deterministic reasons as
+    the fallback. Gemini may only reword facts that were computed - it must
+    never add numbers or claims of its own.
     """
     if not recommendations:
         return None
 
+    crop_names = [rec["crop"] for rec in recommendations[:5]]
     facts = [f"District: {district}, {state}", f"Season: {season}"]
     for index, rec in enumerate(recommendations[:5], start=1):
         facts.append(
@@ -164,23 +166,29 @@ def get_crop_recommendation_summary(district, state, season, recommendations):
     if not is_configured():
         return None
 
-    global _crop_summary_failure_until
+    global _crop_insights_failure_until
 
-    with _crop_summary_cache_lock:
-        cached = _crop_summary_cache.get(cache_key)
+    with _crop_insights_cache_lock:
+        cached = _crop_insights_cache.get(cache_key)
     if cached is not None:
         return cached
 
-    if time.monotonic() < _crop_summary_failure_until:
+    if time.monotonic() < _crop_insights_failure_until:
         return None
 
     prompt = (
-        "Write a short, plain-language explanation for a rural farmer of why "
-        "the following crops are the best and most suitable choices. Use 2-3 "
-        "sentences, mention the top crop first, and explain that suitability "
-        "compares the predicted yield with each crop's own history. Do not add "
-        "any facts, numbers, or claims that are not present. Do not mention "
-        "profit or guarantees. Return only the explanation, no heading.\n\n"
+        "You are helping a rural farmer understand a crop recommendation list. "
+        "Write in simple English, without markdown headings.\n"
+        "First line, exactly in this form: SUMMARY: <2-3 sentences explaining why "
+        "these crops are the best overall and naming the top crop>.\n"
+        "Then one line for each crop below, exactly in this form: "
+        "<crop name>: <1-2 sentences saying what kind of crop it is and why it "
+        "suits this district and season>.\n"
+        "Use only the facts below plus general, widely known crop-type "
+        "information. Explain suitability only as the predicted yield compared "
+        "with the crop's own historical median. You may mention the suitability "
+        "percentage from the facts, but do not add any other numbers. Do not "
+        "mention weather, soil, irrigation, prices, profit, or guarantees.\n\n"
         + facts_text
     )
 
@@ -188,6 +196,7 @@ def get_crop_recommendation_summary(district, state, season, recommendations):
     # crop recommendation itself. The daemon thread is abandoned on timeout and
     # the caller falls back to the deterministic reasons.
     reply_holder = {}
+
     def _fetch():
         reply_holder["reply"] = _call_gemini(
             prompt, models=[MODEL_NAME], rest_fallback=False
@@ -195,25 +204,46 @@ def get_crop_recommendation_summary(district, state, season, recommendations):
 
     worker = threading.Thread(target=_fetch, daemon=True)
     worker.start()
-    worker.join(timeout=5)
+    worker.join(timeout=6)
 
     reply = reply_holder.get("reply")
     if reply is None:
-        _crop_summary_failure_until = time.monotonic() + 60
+        _crop_insights_failure_until = time.monotonic() + 60
         return None
 
-    summary = " ".join(
-        line.strip().replace("**", "") for line in reply.splitlines() if line.strip()
-    )
-    if len(summary) < 20:
+    summary = None
+    details = {}
+    for raw_line in reply.splitlines():
+        line = raw_line.strip().lstrip("-*• ").replace("**", "").strip()
+        if not line:
+            continue
+        if line.upper().startswith("SUMMARY:"):
+            summary = line.split(":", 1)[1].strip() or None
+            continue
+        for crop in crop_names:
+            if crop in details:
+                continue
+            pattern = re.compile(
+                rf"^(?:\d+[.)]\s*)?{re.escape(crop)}\s*:\s*(.+)$",
+                re.IGNORECASE,
+            )
+            match = pattern.match(line)
+            if match:
+                details[crop] = match.group(1).strip()
+                break
+
+    if not details:
+        _crop_insights_failure_until = time.monotonic() + 60
         return None
 
-    with _crop_summary_cache_lock:
+    result = {"summary": summary, "details": details}
+
+    with _crop_insights_cache_lock:
         # Keep the cache small on a long-running server.
-        if len(_crop_summary_cache) > 500:
-            _crop_summary_cache.clear()
-        _crop_summary_cache[cache_key] = summary
-    return summary
+        if len(_crop_insights_cache) > 500:
+            _crop_insights_cache.clear()
+        _crop_insights_cache[cache_key] = result
+    return result
 
 
 def get_telemedicine_advice(symptoms, local_condition, local_advice, urgent):

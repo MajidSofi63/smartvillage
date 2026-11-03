@@ -229,16 +229,21 @@ def recommend_crops(request: RecommendCropRequest):
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
-    # Optionally add a short Gemini-written explanation of the top crops.
+    # Optionally add a Gemini-written summary and a detail line per crop.
     # On any failure the deterministic reasons stay available as the fallback.
-    summary = gemini.get_crop_recommendation_summary(
+    insights = gemini.get_crop_recommendation_insights(
         payload["district"]["name"],
         payload["district"]["state"],
         payload["season"],
         payload["recommendations"],
     )
-    if summary:
-        payload["ai_summary"] = summary
+    if insights:
+        if insights.get("summary"):
+            payload["ai_summary"] = insights["summary"]
+        for rec in payload["recommendations"]:
+            detail = insights["details"].get(rec["crop"])
+            if detail:
+                rec["ai_detail"] = detail
 
     payload["model_info"] = crop_model.model_service.get_model_info()
     analytics.log_event("crop_prediction")

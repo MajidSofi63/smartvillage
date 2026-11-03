@@ -860,6 +860,13 @@ html[dir="rtl"] .suggestion-item { text-align: right; }
   margin: 8px 0 4px;
 }
 .crop-top-sub { margin: 0; max-width: 520px; font-size: 13.5px; color: #5d6f65; }
+.crop-ai-detail {
+  margin: 8px 0 6px;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #33463c;
+}
 .crop-suitability {
   min-width: 150px;
   padding: 14px 18px;
@@ -897,6 +904,7 @@ html[dir="rtl"] .suggestion-item { text-align: right; }
   gap: 10px;
 }
 .crop-rank { color: var(--crop-color); font-weight: 700; margin-right: 4px; }
+.crop-other-detail { margin: 6px 0 0; font-size: 13.5px; line-height: 1.55; color: #4a5c52; }
 .crop-suit-pill {
   background: #e8f5ee;
   color: #1f7a52;

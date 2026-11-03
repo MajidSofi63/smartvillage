@@ -21,8 +21,9 @@ crops for a district and planting season using a trained Random Forest model.
 5. Live weather and a 7-day forecast come from Open-Meteo and are shown for
    context only. The model uses the historical seasonal weather stored in the
    database, so a weather outage never blocks a recommendation.
-6. If Gemini is configured, it writes a short plain-language explanation of the
-   top crops. On any failure the deterministic reasons are kept.
+6. If Gemini is configured, it writes a short overall explanation plus one
+   detail line for every recommended crop. On any failure the deterministic
+   reasons are kept.
 
 ### Data limitations
 
@@ -164,8 +165,8 @@ Application → Storage → Clear site data) or test in a private window.
 `POST /api/recommend` returns the top five crops with expected yield,
 suitability, the Random Forest prediction, historical median and range, years
 of evidence, and reasons. The simplified UI shows the best crop, other suitable
-crops, and a short Gemini-written explanation (the deterministic reasons are
-used if Gemini is unavailable).
+crops, and a short Gemini-written explanation. When Gemini is available it also
+adds a detail line for each crop; otherwise the deterministic reasons are used.
 
 ## Project layout
 
