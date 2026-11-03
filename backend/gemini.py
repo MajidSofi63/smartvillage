@@ -7,23 +7,40 @@
 # GEMINI_MODEL in .env (default: gemini-3.6-flash). If it stops working, check
 # https://ai.google.dev/gemini-api/docs/models for a current name and update
 # .env - no code change is needed.
-
 import threading
+import time
 import requests
 from config import GEMINI_API_KEY, GEMINI_ENABLED, GEMINI_MODEL
 
 MODEL_NAME = GEMINI_MODEL
-FALLBACK_MODELS = [MODEL_NAME, "gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"]
+FALLBACK_MODELS = [MODEL_NAME, "gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.5-flash"]
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
 
 # Initialize google-genai client if installed
+def _make_genai_client():
+    """Create the SDK client with a hard timeout and no retries.
+
+    Without this a bad key or an unreachable model can block a recommendation
+    request for minutes, because the SDK retries internally by default.
+    """
+    from google import genai
+    from google.genai import types
+
+    return genai.Client(
+        api_key=GEMINI_API_KEY,
+        http_options=types.HttpOptions(
+            timeout=10000,
+            retry_options=types.HttpRetryOptions(attempts=1),
+        ),
+    )
+
+
 _genai_client = None
 try:
     import warnings
     warnings.filterwarnings("ignore", category=UserWarning, module="google.genai")
-    from google import genai
     if GEMINI_API_KEY and not GEMINI_API_KEY.startswith("PUT_YOUR"):
-        _genai_client = genai.Client(api_key=GEMINI_API_KEY)
+        _genai_client = _make_genai_client()
 except Exception:
     _genai_client = None
 
@@ -46,11 +63,13 @@ SYSTEM_CONTEXT = (
 )
 
 
-def _call_gemini(prompt_text):
+def _call_gemini(prompt_text, models=None, rest_fallback=True):
     """
     Sends one prompt to Gemini and returns the reply text,
     or None if the call failed for any reason.
     Tries google-genai SDK first, then REST API fallback.
+    `models` optionally limits which model names are tried, and
+    `rest_fallback=False` skips the extra REST attempt.
     """
     if not is_configured():
         return None
@@ -59,13 +78,12 @@ def _call_gemini(prompt_text):
     global _genai_client
     if _genai_client is None:
         try:
-            from google import genai
-            _genai_client = genai.Client(api_key=GEMINI_API_KEY)
+            _genai_client = _make_genai_client()
         except Exception:
             _genai_client = None
 
     if _genai_client is not None:
-        for model in FALLBACK_MODELS:
+        for model in (models or FALLBACK_MODELS):
             try:
                 res = _genai_client.models.generate_content(model=model, contents=prompt_text)
                 if res and res.text:
@@ -78,6 +96,9 @@ def _call_gemini(prompt_text):
                 break
 
     # Method 2: REST fallback
+    if not rest_fallback:
+        return None
+
     headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
     payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
 
@@ -107,73 +128,92 @@ def ask_gemini(user_message):
     return reply
 
 
-# Cache rewritten crop reasons so repeat requests for the same district/season
-# do not pay for another Gemini call.
-_crop_reason_cache = {}
-_crop_reason_cache_lock = threading.Lock()
+# Cache crop summaries so repeat requests for the same district/season do not
+# pay for another Gemini call.
+_crop_summary_cache = {}
+_crop_summary_cache_lock = threading.Lock()
+
+# After a failed call, skip Gemini for a short while so every request does not
+# pay the timeout again. Reset automatically once the window passes.
+_crop_summary_failure_until = 0.0
 
 
-def get_crop_recommendation_reasons(facts):
+def get_crop_recommendation_summary(district, state, season, recommendations):
     """
-    Rewrite the computed crop-recommendation facts as 3-5 short bullet points.
-    Returns None when Gemini is unavailable or ignores the format, so the caller
-    can keep the deterministic reasons.
+    Turn the computed crop ranking into a short, plain-language explanation of
+    why the top crops suit this district and season.
 
-    Gemini is only allowed to reword facts that were already computed; it must
-    never add numbers or claims of its own.
+    Returns None when Gemini is unavailable, so the caller can fall back to the
+    deterministic reasons already built by crop_recommendation.py. Gemini may
+    only reword facts that were computed - it must never add numbers or claims
+    of its own.
     """
-    cache_key = facts
+    if not recommendations:
+        return None
+
+    facts = [f"District: {district}, {state}", f"Season: {season}"]
+    for index, rec in enumerate(recommendations[:5], start=1):
+        facts.append(
+            f"{index}. {rec['crop']}: suitability {rec['suitability']}% of its "
+            f"historical median, expected yield {rec['expected_yield']} t/ha, "
+            f"historical median {rec['historical_median']} t/ha"
+        )
+    facts_text = "\n".join(facts)
+    cache_key = facts_text
 
     if not is_configured():
         return None
 
-    with _crop_reason_cache_lock:
-        cached = _crop_reason_cache.get(cache_key)
+    global _crop_summary_failure_until
+
+    with _crop_summary_cache_lock:
+        cached = _crop_summary_cache.get(cache_key)
     if cached is not None:
         return cached
 
+    if time.monotonic() < _crop_summary_failure_until:
+        return None
+
     prompt = (
-        "Rewrite the following computed crop-recommendation facts as 3-5 short, "
-        "plain-language bullet points in English. Do not add any facts, "
-        "numbers, or claims that are not present. Do not mention profit or "
-        "guarantees. Return only the bullet points, each starting with '- '.\n\n"
-        + facts
+        "Write a short, plain-language explanation for a rural farmer of why "
+        "the following crops are the best and most suitable choices. Use 2-3 "
+        "sentences, mention the top crop first, and explain that suitability "
+        "compares the predicted yield with each crop's own history. Do not add "
+        "any facts, numbers, or claims that are not present. Do not mention "
+        "profit or guarantees. Return only the explanation, no heading.\n\n"
+        + facts_text
     )
 
-    reply = _call_gemini(prompt)
+    # Hard wall-clock cap: a slow or misconfigured Gemini must never delay the
+    # crop recommendation itself. The daemon thread is abandoned on timeout and
+    # the caller falls back to the deterministic reasons.
+    reply_holder = {}
+    def _fetch():
+        reply_holder["reply"] = _call_gemini(
+            prompt, models=[MODEL_NAME], rest_fallback=False
+        )
+
+    worker = threading.Thread(target=_fetch, daemon=True)
+    worker.start()
+    worker.join(timeout=5)
+
+    reply = reply_holder.get("reply")
     if reply is None:
+        _crop_summary_failure_until = time.monotonic() + 60
         return None
 
-    # Keep only explicit bullet lines so a preamble is not shown as a reason.
-    bullets = []
-    for line in reply.splitlines():
-        stripped = line.strip()
-        if stripped.startswith(("-", "*", "•")):
-            cleaned = stripped.lstrip("-*• ").replace("**", "").strip()
-            if cleaned:
-                bullets.append(cleaned)
-
-    # If the model ignored the bullet format, drop a one-line preamble.
-    if not bullets:
-        lines = [
-            line.strip().replace("**", "")
-            for line in reply.splitlines()
-            if line.strip()
-        ]
-        if len(lines) > 1 and lines[0].endswith(":"):
-            lines = lines[1:]
-        bullets = lines
-
-    result = bullets[:5]
-    if len(result) < 3:
+    summary = " ".join(
+        line.strip().replace("**", "") for line in reply.splitlines() if line.strip()
+    )
+    if len(summary) < 20:
         return None
 
-    with _crop_reason_cache_lock:
+    with _crop_summary_cache_lock:
         # Keep the cache small on a long-running server.
-        if len(_crop_reason_cache) > 500:
-            _crop_reason_cache.clear()
-        _crop_reason_cache[cache_key] = result
-    return result
+        if len(_crop_summary_cache) > 500:
+            _crop_summary_cache.clear()
+        _crop_summary_cache[cache_key] = summary
+    return summary
 
 
 def get_telemedicine_advice(symptoms, local_condition, local_advice, urgent):

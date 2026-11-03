@@ -1,4 +1,4 @@
-const CACHE_NAME = "smart-village-v6";
+const CACHE_NAME = "smart-village-v7";
 const APP_SHELL_FILES = ["/", "/style.css", "/script.js", "/translations.js", "/manifest.json"];
 const CACHEABLE_API_PATHS = ["/api/districts", "/api/seasons", "/workers", "/employment/stats"];
 

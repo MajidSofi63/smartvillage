@@ -229,14 +229,16 @@ def recommend_crops(request: RecommendCropRequest):
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
-    # Optionally rewrite ONLY the top crop's reasons, once per request.
-    top_recommendations = payload["recommendations"]
-    if top_recommendations and gemini.is_configured():
-        rewritten = gemini.get_crop_recommendation_reasons(
-            "\n".join(top_recommendations[0]["reasons"]),
-        )
-        if rewritten:
-            top_recommendations[0]["reasons"] = rewritten
+    # Optionally add a short Gemini-written explanation of the top crops.
+    # On any failure the deterministic reasons stay available as the fallback.
+    summary = gemini.get_crop_recommendation_summary(
+        payload["district"]["name"],
+        payload["district"]["state"],
+        payload["season"],
+        payload["recommendations"],
+    )
+    if summary:
+        payload["ai_summary"] = summary
 
     payload["model_info"] = crop_model.model_service.get_model_info()
     analytics.log_event("crop_prediction")

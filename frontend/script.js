@@ -247,17 +247,6 @@ function renderCropRecommendation(data) {
 
   const top = data.recommendations[0];
   const others = data.recommendations.slice(1);
-  const weather = data.weather_used || {};
-  const modelInput = weather.model_input || {};
-  const live = weather.live_conditions;
-  const forecast = weather.forecast_7day || [];
-
-  const stat = function (labelKey, labelFallback, value, unit) {
-    return `<div class="crop-stat">
-      <span>${translate(labelKey, labelFallback)}</span>
-      <strong>${escapeHtml(value)} <small>${escapeHtml(unit)}</small></strong>
-    </div>`;
-  };
 
   const otherHtml = others.length
     ? others.map(function (rec, index) {
@@ -266,55 +255,17 @@ function renderCropRecommendation(data) {
             <strong><span class="crop-rank">#${index + 2}</span> ${escapeHtml(rec.crop)}</strong>
             <span class="crop-suit-pill">${escapeHtml(rec.suitability)}%</span>
           </div>
-          <div class="crop-other-stats">
-            <span><b>${escapeHtml(rec.expected_yield)}</b> t/ha ${translate("cropExpectedShort", "expected")}</span>
-            <span><b>${escapeHtml(rec.historical_median)}</b> t/ha ${translate("cropMedianShort", "median")}</span>
-            <span><b>${escapeHtml(rec.years_of_evidence)}</b> ${translate("cropYearsShort", "years")}</span>
-          </div>
         </div>`;
       }).join("")
     : `<p class="crop-muted">${translate("cropNoOther", "No other strong matches.")}</p>`;
 
-  const reasonsHtml = data.recommendations.map(function (rec, index) {
-    const items = (rec.reasons || []).map(function (reason) {
-      return `<li>${escapeHtml(reason)}</li>`;
-    }).join("");
-    return `<details class="crop-reason" ${index === 0 ? "open" : ""}>
-      <summary><span class="crop-rank">#${index + 1}</span> ${escapeHtml(rec.crop)}</summary>
-      <ul>${items}</ul>
-    </details>`;
+  // Gemini's short explanation when available; otherwise the computed reasons.
+  const fallbackReasons = (top.reasons || []).map(function (reason) {
+    return `<li>${escapeHtml(reason)}</li>`;
   }).join("");
-
-  const limitationsHtml = (data.limitations || []).map(function (item) {
-    return `<li>${escapeHtml(item)}</li>`;
-  }).join("");
-
-  const liveText = function (value, unit) {
-    return (value === null || value === undefined)
-      ? translate("cropUnavailable", "Unavailable")
-      : `${value} ${unit}`;
-  };
-
-  const forecastHtml = forecast.length
-    ? forecast.slice(0, 7).map(function (day) {
-        const date = new Date(`${day.date}T00:00:00`);
-        return `<div class="crop-forecast-day">
-          <span>${date.toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</span>
-          <b>${day.temp_min}°–${day.temp_max}°C</b>
-          <span>${day.precipitation} mm</span>
-        </div>`;
-      }).join("")
-    : `<p class="crop-muted">${translate("cropForecastUnavailable", "Live forecast unavailable.")}</p>`;
-
-  const modelInfo = data.model_info || {};
-  const metrics = modelInfo.metrics || {};
-  const metric = metrics.RandomForest || {};
-  const testMae = metric.MAE === undefined ? "--" : Number(metric.MAE).toFixed(3);
-  const modelRows = `<tr>
-      <td>Random Forest</td>
-      <td>${escapeHtml(top.models.RandomForest)} t/ha</td>
-      <td>${testMae} t/ha</td>
-    </tr>`;
+  const whyHtml = data.ai_summary
+    ? `<p class="crop-ai-summary">${escapeHtml(data.ai_summary)}</p>`
+    : `<ul class="crop-reasons-list">${fallbackReasons}</ul>`;
 
   box.innerHTML = `
     <div class="crop-results-head">
@@ -337,54 +288,11 @@ function renderCropRecommendation(data) {
       </div>
     </div>
 
-    <div class="crop-stat-grid">
-      ${stat("cropExpectedYield", "Expected yield", top.expected_yield, "t/ha")}
-      ${stat("cropHistoricalMedian", "Historical median", top.historical_median, "t/ha")}
-      ${stat("cropTypicalRange", "Typical range", `${top.historical_range.p25}–${top.historical_range.p75}`, "t/ha")}
-      ${stat("cropYearsEvidence", "Years of evidence", top.years_of_evidence, translate("cropYearsShort", "years"))}
-    </div>
-
-    <div class="crop-pill-row">
-      <span class="crop-hint">${translate("cropRankHint", "Ranked by suitability, never by raw yield across crops.")}</span>
-    </div>
-
     <h4 class="crop-subheading">${translate("cropOtherMatches", "Other strong matches")}</h4>
     <div class="crop-other-list">${otherHtml}</div>
 
     <h4 class="crop-subheading">${translate("cropWhy", "Why these crops")}</h4>
-    <div class="crop-reasons">${reasonsHtml}</div>
-
-    <h4 class="crop-subheading">${translate("cropWeatherUsed", "Weather used")}</h4>
-    <div class="crop-weather-grid">
-      <div class="crop-weather-item"><span>🌡️</span><b>${modelInput.temperature} °C</b><small>${translate("cropSeasonalTemp", "Seasonal average")}</small></div>
-      <div class="crop-weather-item"><span>🌧️</span><b>${modelInput.rainfall} mm</b><small>${translate("cropSeasonalRain", "Seasonal total")}</small></div>
-      <div class="crop-weather-item"><span>📅</span><b>${(modelInput.years_used || []).length}</b><small>${translate("cropYearsUsed", "Years used")}</small></div>
-      <div class="crop-weather-item"><span>🌤️</span><b>${liveText(live && live.temperature, "°C")}</b><small>${translate("cropLiveTemp", "Live temperature")}</small></div>
-    </div>
-    <p class="crop-note">${escapeHtml(modelInput.note || "")}</p>
-    <div class="crop-live-weather">
-      <span>${translate("cropLiveConditions", "Live conditions")}:</span>
-      ${translate("cropHumidity", "Humidity")} ${liveText(live && live.humidity, "%")} ·
-      ${translate("cropPrecipitation", "Precipitation")} ${liveText(live && live.precipitation, "mm")} ·
-      ${translate("cropWind", "Wind")} ${liveText(live && live.wind_speed, "km/h")}
-    </div>
-    <div class="crop-forecast">${forecastHtml}</div>
-
-    <h4 class="crop-subheading">${translate("cropLimitations", "Read this before acting")}</h4>
-    <ul class="crop-limitations">${limitationsHtml}</ul>
-
-    <details class="crop-model-details">
-      <summary>${translate("cropModelDetails", "Model details")}</summary>
-      <table>
-        <thead><tr>
-          <th>${translate("cropModel", "Model")}</th>
-          <th>${translate("cropPrediction", "Prediction")}</th>
-          <th>${translate("cropTestMae", "Test MAE")}</th>
-        </tr></thead>
-        <tbody>${modelRows}</tbody>
-      </table>
-      <p class="crop-note">${translate("cropModelNote", "Test metrics come from held-out years 2010–2011, the most recent in the dataset.")}</p>
-    </details>
+    <div class="crop-why">${whyHtml}</div>
   `;
 }
 
