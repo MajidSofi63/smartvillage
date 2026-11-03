@@ -1,30 +1,28 @@
 # AI Smart Village Platform
 
-A rural-services web app with six tabs: Crop Recommendation, Telemedicine,
-Government Schemes, Water Management, Disaster Alerts, and Employment.
+A rural-services web app with five tabs: Crop Recommendation, Telemedicine,
+Government Schemes, Disaster Alerts, and Employment.
 
 This repository was upgraded from a single-field crop-yield predictor to a
 district-level crop recommendation system for India. The crop tab now ranks
-crops for a district and planting season using three trained ML models and a
-weighted ensemble.
+crops for a district and planting season using a trained Random Forest model.
 
 ## Crop recommendation: how it works
 
 1. The user picks an Indian district and a planting season (Kharif, Rabi, etc.).
 2. `POST /api/recommend` loads every historical `district + season + crop` row
    from PostgreSQL.
-3. Three models (Random Forest, XGBoost, HistGradientBoosting) predict yield in
-   one batched call. Their weighted ensemble (`ensemble_weights.pkl`) is the
-   headline prediction.
+3. A Random Forest model predicts yield for every candidate crop in one
+   batched call. That prediction is the headline number.
 4. Crops are ranked by **suitability**:
-   `predicted ensemble yield / the crop's own historical median yield`.
+   `predicted Random Forest yield / the crop's own historical median yield`.
    Ranking by raw yield across crops would always favour high-yield crops such
    as sugarcane, so each crop is compared with its own history instead.
 5. Live weather and a 7-day forecast come from Open-Meteo and are shown for
    context only. The model uses the historical seasonal weather stored in the
    database, so a weather outage never blocks a recommendation.
-6. If Gemini is configured, it rewords the **top crop's** reasons in the
-   selected language. On any failure the deterministic reasons are kept.
+6. If Gemini is configured, it rewords the **top crop's** reasons in English.
+   On any failure the deterministic reasons are kept.
 
 ### Data limitations (also shown in the UI)
 
@@ -39,9 +37,8 @@ weighted ensemble.
 
 ### 1. Install dependencies
 
-The model artefacts were trained with specific library versions.
-`histgradientboosting_model.pkl` cannot be unpickled by scikit-learn 1.9+, so
-keep the pins in `backend/requirements.txt`:
+The Random Forest model artefacts were trained with a specific library version.
+Keep the pins in `backend/requirements.txt`:
 
 ```powershell
 py -m venv .venv
@@ -49,7 +46,7 @@ py -m venv .venv
 pip install -r backend\requirements.txt
 ```
 
-Pinned versions: `scikit-learn==1.5.2`, `xgboost==2.1.2`, `joblib==1.4.2`,
+Pinned versions: `scikit-learn==1.5.2`, `joblib==1.4.2`,
 `numpy==2.1.3`, `pandas==2.2.3`.
 
 ### 2. Configure environment variables
@@ -162,11 +159,11 @@ Application → Storage → Clear site data) or test in a private window.
 | --- | --- | --- |
 | `GET` | `/api/districts?q=` | Search districts by name or state (max 15) |
 | `GET` | `/api/seasons` | Seasons present in the loaded data |
-| `POST` | `/api/recommend` | Body: `{ "district_id": 1, "season": "Kharif", "language": "en" }` |
+| `POST` | `/api/recommend` | Body: `{ "district_id": 1, "season": "Kharif" }` |
 
 `POST /api/recommend` returns the top five crops with expected yield,
-suitability, per-model predictions, model agreement, historical median and
-range, years of evidence, reasons, the weather used, and data limitations.
+suitability, the Random Forest prediction, historical median and range, years
+of evidence, reasons, the weather used, and data limitations.
 Live weather is included when Open-Meteo is reachable.
 
 ## Project layout
@@ -174,7 +171,7 @@ Live weather is included when Open-Meteo is reachable.
 ```
 backend/
   main.py                    FastAPI app and routes
-  crop_model.py              Loads the 3 models + ensemble weights
+  crop_model.py              Loads the Random Forest model + label encoders
   crop_recommendation.py     Pure ranking logic
   crop_db.py                 districts / crop_stats access
   crop_weather.py            Open-Meteo live weather (display only)
@@ -187,8 +184,7 @@ frontend/                    HTML, CSS, JS, translations, service worker
 
 ## Notes
 
-- The old single-field crop model (`backend/train_model.py`, `crop_data.csv`,
-  and the old `.pkl` files) is no longer used by the application.
-- To retrain the district models, use the original training pipeline that
+- The app is English-only.
+- To retrain the district model, use the original training pipeline that
   produced `backend/models/crop_recommendation/`, then update the artefacts and
   rerun `load_crop_data.py` if the underlying data changed.

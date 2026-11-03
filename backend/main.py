@@ -17,7 +17,6 @@ import crop_recommendation
 import crop_weather
 import telemedicine
 import schemes
-import water
 import disaster
 import employment
 import gemini
@@ -81,12 +80,10 @@ def require_admin(x_admin_password: str = Header(...)):
 class RecommendCropRequest(BaseModel):
     district_id: int
     season: str
-    language: str = "en"
 
 
 class SymptomRequest(BaseModel):
     symptoms: str
-    language: str = "en"
 
 
 class SchemeRequest(BaseModel):
@@ -94,10 +91,6 @@ class SchemeRequest(BaseModel):
     annual_income: float
     owns_land: bool
     category: str
-
-
-class WaterRequest(BaseModel):
-    city: str
 
 
 class WeatherRequest(BaseModel):
@@ -165,7 +158,7 @@ class ChatRequest(BaseModel):
 
 # ---------- Routes ----------
 
-# --- Crop Recommendation (district + season -> ranked crops from ML ensemble) ---
+# --- Crop Recommendation (district + season -> ranked crops from Random Forest) ---
 
 @app.get("/api/districts")
 def get_crop_districts(q: str = ""):
@@ -241,7 +234,6 @@ def recommend_crops(request: RecommendCropRequest):
     if top_recommendations and gemini.is_configured():
         rewritten = gemini.get_crop_recommendation_reasons(
             "\n".join(top_recommendations[0]["reasons"]),
-            request.language,
         )
         if rewritten:
             top_recommendations[0]["reasons"] = rewritten
@@ -286,7 +278,6 @@ def check_symptoms(request: SymptomRequest):
     enhanced_advice = gemini.get_telemedicine_advice(
         symptoms=request.symptoms, local_condition=local_result["condition"],
         local_advice=local_result["advice"], urgent=local_result["urgent"],
-        language_code=request.language,
     )
     analytics.log_event("telemedicine_query")
     return {
@@ -304,15 +295,6 @@ def get_schemes(request: SchemeRequest):
     result = schemes.find_eligible_schemes(request.age, request.annual_income, request.owns_land, request.category)
     analytics.log_event("scheme_check")
     return {"success": True, "eligible_schemes": result}
-
-
-# --- Smart Water Management ---
-
-@app.post("/water")
-def water_status(request: WaterRequest):
-    result = water.get_water_status(request.city)
-    analytics.log_event("water_check")
-    return result
 
 
 # --- Disaster Alerts ---

@@ -24,11 +24,6 @@
   <header>
     <div class="header-inner">
       <h1 data-i18n="appTitle">🌾 AI Smart Village Platform</h1>
-      <select id="langSwitch">
-        <option value="en">English</option>
-        <option value="hi">हिंदी</option>
-        <option value="ur">اردو</option>
-      </select>
     </div>
   </header>
 
@@ -39,7 +34,6 @@
       <button class="tab-btn" data-tab="crop" data-i18n="navCrop">Crop Recommendation</button>
       <button class="tab-btn" data-tab="telemedicine" data-i18n="navTele">Telemedicine</button>
       <button class="tab-btn" data-tab="schemes" data-i18n="navSchemes">Govt. Schemes</button>
-      <button class="tab-btn" data-tab="water" data-i18n="navWater">Water Management</button>
       <button class="tab-btn" data-tab="disaster" data-i18n="navDisaster">Disaster Alerts</button>
       <button class="tab-btn" data-tab="employment" data-i18n="navEmployment">Employment</button>
     </div>
@@ -56,8 +50,8 @@
       <div class="hero">
         <h2 data-i18n="dashHeading">Welcome</h2>
         <p data-i18n="dashIntro">
-          A single platform that brings together crop prediction, telemedicine, government
-          scheme discovery, water management, disaster alerts, and employment matching.
+          A single platform that brings together crop recommendation, telemedicine, government
+          scheme discovery, disaster alerts, and employment matching.
         </p>
       </div>
 
@@ -77,11 +71,6 @@
           <h3 data-i18n="cardSchemesTitle">Govt. Schemes</h3>
           <p data-i18n="cardSchemesDesc">Find welfare schemes you're eligible for.</p>
         </div>
-        <div class="card" data-goto="water">
-          <div class="card-icon-badge badge-water">💧</div>
-          <h3 data-i18n="cardWaterTitle">Water Management</h3>
-          <p data-i18n="cardWaterDesc">Check soil moisture and reservoir levels.</p>
-        </div>
         <div class="card" data-goto="disaster">
           <div class="card-icon-badge badge-disaster">⛈️</div>
           <h3 data-i18n="cardDisasterTitle">Disaster Alerts</h3>
@@ -98,7 +87,7 @@
     <!-- ================= CROP RECOMMENDATION TAB ================= -->
     <section id="crop" class="tab-section">
       <h2 data-i18n="cropHeading">Crop Recommendation</h2>
-      <p class="section-desc" data-i18n="cropDesc">Recommends the best crops for your district and planting season using historical yield data, weather, and three ML models.</p>
+      <p class="section-desc" data-i18n="cropDesc">Recommends the best crops for your district and planting season using historical yield data, weather, and a Random Forest model.</p>
 
       <form id="cropForm" autocomplete="off">
         <label for="districtSearch" data-i18n="labelDistrict">District</label>
@@ -166,21 +155,6 @@
       </form>
 
       <div id="schemesResult" class="result-box"></div>
-    </section>
-
-    <!-- ================= WATER MANAGEMENT TAB ================= -->
-    <section id="water" class="tab-section">
-      <h2 data-i18n="waterHeading">Smart Water Management</h2>
-      <p class="section-desc" data-i18n="waterDesc">Real soil moisture and rainfall data for your area, via Open-Meteo.</p>
-
-      <form id="waterForm">
-        <label for="waterCity" data-i18n="labelCity">Your City/Town</label>
-        <input type="text" id="waterCity" placeholder="e.g. Baramulla" required>
-
-        <button type="submit" data-i18n="btnWaterRefresh">Check Water Status</button>
-      </form>
-
-      <div id="waterResult" class="result-box"></div>
     </section>
 
     <!-- ================= DISASTER ALERTS TAB ================= -->

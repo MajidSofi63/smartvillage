@@ -16,7 +16,7 @@ def build_recommendations(district, season, history_rows, model_service, live_we
     """
     Rank crops for one district and season.
 
-    The headline number is the weighted ensemble yield. Ranking uses
+    The headline number is the Random Forest predicted yield. Ranking uses
     suitability = predicted yield / that crop's own historical median, so a
     naturally low-yield crop is not punished for being low-yield.
     """
@@ -93,26 +93,10 @@ def build_recommendations(district, season, history_rows, model_service, live_we
         hist_p75 = float(np.percentile(hist_yields, 75))
         num_years = len(years_by_crop.get(crop_name, hist_yields))
 
-        ensemble_pred = float(values.get("Ensemble", 0.0))
+        predicted_yield = float(values.get("RandomForest", 0.0))
         suitability = (
-            (ensemble_pred / hist_median * 100.0) if hist_median > 0 else 0.0
+            (predicted_yield / hist_median * 100.0) if hist_median > 0 else 0.0
         )
-
-        # Agreement is the coefficient of variation across the three models.
-        model_values = [
-            float(values.get("RandomForest", 0.0)),
-            float(values.get("XGBoost", 0.0)),
-            float(values.get("HistGradientBoosting", 0.0)),
-        ]
-        mean_value = float(np.mean(model_values))
-        std_value = float(np.std(model_values))
-        cv = (std_value / mean_value * 100.0) if mean_value > 0 else 999.0
-        if cv < 10:
-            agreement = "High"
-        elif cv < 20:
-            agreement = "Medium"
-        else:
-            agreement = "Low"
 
         reasons = [
             f"Recorded in {season} season in {district_name}, {state_name} "
@@ -121,28 +105,20 @@ def build_recommendations(district, season, history_rows, model_service, live_we
             f"(average of {len(years_used)} years)",
             f"Seasonal rainfall estimate: {model_rain:.1f} mm "
             f"(average of {len(years_used)} years)",
-            f"Predicted yield {ensemble_pred:.2f} t/ha versus this crop's "
-            f"historical median of {hist_median:.2f} t/ha",
-            f"Model agreement: {agreement} "
-            f"(coefficient of variation {cv:.1f}%)",
+            f"Random Forest predicted yield {predicted_yield:.2f} t/ha versus "
+            f"this crop's historical median of {hist_median:.2f} t/ha",
         ]
 
         recommendations.append(
             {
                 "crop": crop_name,
-                "expected_yield": round(ensemble_pred, 3),
+                "expected_yield": round(predicted_yield, 3),
                 "suitability": round(float(suitability), 2),
                 "models": {
                     "RandomForest": round(
                         float(values.get("RandomForest", 0.0)), 3
                     ),
-                    "XGBoost": round(float(values.get("XGBoost", 0.0)), 3),
-                    "HistGradientBoosting": round(
-                        float(values.get("HistGradientBoosting", 0.0)), 3
-                    ),
-                    "Ensemble": round(ensemble_pred, 3),
                 },
-                "agreement": agreement,
                 "historical_median": round(hist_median, 3),
                 "historical_range": {
                     "p25": round(hist_p25, 3),
@@ -164,10 +140,6 @@ def build_recommendations(district, season, history_rows, model_service, live_we
         "Weather input is a seasonal estimate, not a forecast",
         "Suitability is based on history; it is not a profit estimate or a guarantee",
     ]
-    if any(item["agreement"] == "Low" for item in top_five):
-        limitations.append(
-            "Low-confidence warning: models disagree on at least one top crop"
-        )
     if any(item["years_of_evidence"] < 5 for item in top_five):
         limitations.append(
             "Low-confidence warning: fewer than 5 years of history "

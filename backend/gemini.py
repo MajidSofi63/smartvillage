@@ -1,7 +1,7 @@
 # gemini.py
 # Calls Google's Gemini API for two things:
 #   1. The floating chat assistant (ask_gemini)
-#   2. Enhancing + translating telemedicine advice (get_telemedicine_advice)
+#   2. Enhancing telemedicine advice (get_telemedicine_advice)
 #
 # NOTE ON THE MODEL NAME: Google deprecates these fast. The model is read from
 # GEMINI_MODEL in .env (default: gemini-3.6-flash). If it stops working, check
@@ -15,8 +15,6 @@ from config import GEMINI_API_KEY, GEMINI_ENABLED, GEMINI_MODEL
 MODEL_NAME = GEMINI_MODEL
 FALLBACK_MODELS = [MODEL_NAME, "gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"]
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
-
-LANGUAGE_NAMES = {"en": "English", "hi": "Hindi", "ur": "Urdu"}
 
 # Initialize google-genai client if installed
 _genai_client = None
@@ -40,7 +38,7 @@ def is_configured():
 
 SYSTEM_CONTEXT = (
     "You are the assistant for the AI Smart Village Platform, a rural-services web app "
-    "with six tabs: Crop Recommendation, Telemedicine, Government Schemes, Water Management, "
+    "with five tabs: Crop Recommendation, Telemedicine, Government Schemes, "
     "Disaster Alerts, and Employment. Answer the user's question briefly and, where useful, "
     "tell them which tab to use for the actual tool. Never give a medical diagnosis - always "
     "recommend seeing a doctor for health questions. Keep answers short and simple, rural "
@@ -115,17 +113,16 @@ _crop_reason_cache = {}
 _crop_reason_cache_lock = threading.Lock()
 
 
-def get_crop_recommendation_reasons(facts, language_code):
+def get_crop_recommendation_reasons(facts):
     """
-    Rewrite the computed crop-recommendation facts as 3-5 short bullet points
-    in the user's language. Returns None when Gemini is unavailable or ignores
-    the format, so the caller can keep the deterministic reasons.
+    Rewrite the computed crop-recommendation facts as 3-5 short bullet points.
+    Returns None when Gemini is unavailable or ignores the format, so the caller
+    can keep the deterministic reasons.
 
     Gemini is only allowed to reword facts that were already computed; it must
     never add numbers or claims of its own.
     """
-    language_name = LANGUAGE_NAMES.get(language_code, "English")
-    cache_key = f"{language_code}:{facts}"
+    cache_key = facts
 
     if not is_configured():
         return None
@@ -137,7 +134,7 @@ def get_crop_recommendation_reasons(facts, language_code):
 
     prompt = (
         "Rewrite the following computed crop-recommendation facts as 3-5 short, "
-        f"plain-language bullet points in {language_name}. Do not add any facts, "
+        "plain-language bullet points in English. Do not add any facts, "
         "numbers, or claims that are not present. Do not mention profit or "
         "guarantees. Return only the bullet points, each starting with '- '.\n\n"
         + facts
@@ -179,21 +176,19 @@ def get_crop_recommendation_reasons(facts, language_code):
     return result
 
 
-def get_telemedicine_advice(symptoms, local_condition, local_advice, urgent, language_code):
+def get_telemedicine_advice(symptoms, local_condition, local_advice, urgent):
     """
     Takes the LOCAL keyword-matched result (which we trust for the urgent/not-urgent
-    safety flag) and asks Gemini to turn it into a clearer, more complete explanation,
-    written in the user's chosen language. If Gemini is unavailable, we fall back to
-    the local English advice so the feature still works offline.
+    safety flag) and asks Gemini to turn it into a clearer, more complete explanation
+    in English. If Gemini is unavailable, we fall back to the local English advice so
+    the feature still works offline.
     """
-    language_name = LANGUAGE_NAMES.get(language_code, "English")
-
     prompt = (
         f"A rural telemedicine app matched these symptoms: \"{symptoms}\" "
         f"to the likely condition \"{local_condition}\" with this basic advice: \"{local_advice}\". "
         f"Urgency level: {'URGENT - needs immediate medical care' if urgent else 'not urgent'}. "
         f"Rewrite this as a clear, simple, well-explained response for a rural user with limited "
-        f"medical knowledge, in {language_name}. Include: what the condition likely is, what to do "
+        f"medical knowledge, in English. Include: what the condition likely is, what to do "
         f"right now, and a clear reminder to see a real doctor - this is not a diagnosis. "
         f"Keep it under 120 words. Do not use complex medical jargon."
     )

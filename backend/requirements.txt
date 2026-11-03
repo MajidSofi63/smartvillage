@@ -6,10 +6,8 @@ python-dotenv
 email-validator
 google-genai
 
-# Crop recommendation model artefacts were trained with these exact versions.
-# Keep them pinned: HistGradientBoosting cannot be unpickled by scikit-learn 1.9+.
+# Crop recommendation model artefacts were trained with this exact version.
 scikit-learn==1.5.2
-xgboost==2.1.2
 joblib==1.4.2
 numpy==2.1.3
 pandas==2.2.3

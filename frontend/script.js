@@ -1,7 +1,7 @@
 // script.js
-// Handles: tab switching, language translation, connecting all forms to the
-// backend, and the floating chat widget. API_URL is empty because this file is
-// served BY the same FastAPI app it talks to (same origin).
+// Handles: tab switching, connecting all forms to the backend, and the
+// floating chat widget. API_URL is empty because this file is served BY the
+// same FastAPI app it talks to (same origin).
 const API_URL = "";
 
 // ================= OFFLINE SUPPORT (Service Worker) =================
@@ -42,39 +42,6 @@ async function safeFetch(url, options) {
 
   return { ok: true, data: data, errorMessage: null };
 }
-
-
-// ================= LANGUAGE SWITCHING =================
-
-let currentLang = localStorage.getItem("smartVillageLang") || "en";
-
-function applyLanguage(lang) {
-  currentLang = lang;
-  localStorage.setItem("smartVillageLang", lang);
-  const dict = translations[lang];
-
-  document.getElementById("htmlRoot").setAttribute("dir", lang === "ur" ? "rtl" : "ltr");
-  document.getElementById("htmlRoot").setAttribute("lang", lang);
-
-  document.querySelectorAll("[data-i18n]").forEach(function (el) {
-    const key = el.getAttribute("data-i18n");
-    if (dict[key]) el.textContent = dict[key];
-  });
-
-  document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
-    const key = el.getAttribute("data-i18n-placeholder");
-    if (dict[key]) el.placeholder = dict[key];
-  });
-
-  document.getElementById("langSwitch").value = lang;
-
-  // Re-render the last crop result so its labels follow the new language.
-  if (lastCropRecommendation) renderCropRecommendation(lastCropRecommendation);
-}
-
-document.getElementById("langSwitch").addEventListener("change", function (event) {
-  applyLanguage(event.target.value);
-});
 
 
 // ================= TAB SWITCHING =================
@@ -120,7 +87,6 @@ function setConnectionWarning(isDown, detail) {
 // ================= PAGE LOAD =================
 
 window.onload = async function () {
-  applyLanguage(currentLang);
   restoreEmploymentSession();
   handlePasswordRecoveryLink(); // if they arrived from a reset email, show the "new password" form
 
@@ -142,7 +108,7 @@ let cropSearchTimer = null;
 let lastCropRecommendation = null;
 
 function translate(key, fallback) {
-  const dict = translations[currentLang] || {};
+  const dict = translations.en || {};
   return dict[key] || fallback;
 }
 
@@ -258,7 +224,6 @@ document.getElementById("cropForm").addEventListener("submit", async function (e
     body: JSON.stringify({
       district_id: cropDistrictId,
       season: season,
-      language: currentLang,
     }),
   });
 
@@ -287,12 +252,6 @@ function renderCropRecommendation(data) {
   const live = weather.live_conditions;
   const forecast = weather.forecast_7day || [];
 
-  const agreementClass = (top.agreement || "").toLowerCase();
-  const agreementText = translate(
-    "agreement" + (top.agreement || "High"),
-    top.agreement + " agreement"
-  );
-
   const stat = function (labelKey, labelFallback, value, unit) {
     return `<div class="crop-stat">
       <span>${translate(labelKey, labelFallback)}</span>
@@ -302,11 +261,6 @@ function renderCropRecommendation(data) {
 
   const otherHtml = others.length
     ? others.map(function (rec, index) {
-        const cls = (rec.agreement || "").toLowerCase();
-        const otherAgreement = translate(
-          "agreement" + (rec.agreement || "High"),
-          rec.agreement + " agreement"
-        );
         return `<div class="crop-other-item">
           <div class="crop-other-head">
             <strong><span class="crop-rank">#${index + 2}</span> ${escapeHtml(rec.crop)}</strong>
@@ -316,7 +270,6 @@ function renderCropRecommendation(data) {
             <span><b>${escapeHtml(rec.expected_yield)}</b> t/ha ${translate("cropExpectedShort", "expected")}</span>
             <span><b>${escapeHtml(rec.historical_median)}</b> t/ha ${translate("cropMedianShort", "median")}</span>
             <span><b>${escapeHtml(rec.years_of_evidence)}</b> ${translate("cropYearsShort", "years")}</span>
-            <span class="crop-agreement ${cls}">${escapeHtml(otherAgreement)}</span>
           </div>
         </div>`;
       }).join("")
@@ -354,25 +307,14 @@ function renderCropRecommendation(data) {
     : `<p class="crop-muted">${translate("cropForecastUnavailable", "Live forecast unavailable.")}</p>`;
 
   const modelInfo = data.model_info || {};
-  const weights = modelInfo.weights || {};
   const metrics = modelInfo.metrics || {};
-  const modelRows = [
-    ["RandomForest", "Random Forest"],
-    ["XGBoost", "XGBoost"],
-    ["HistGradientBoosting", "HistGradientBoosting"],
-  ].map(function (pair) {
-    const name = pair[0];
-    const jsonKey = name === "RandomForest" ? "RandomForest" : name;
-    const metric = metrics[jsonKey] || {};
-    const weight = weights[name] === undefined ? "--" : (weights[name] * 100).toFixed(1) + "%";
-    const testMae = metric.MAE === undefined ? "--" : Number(metric.MAE).toFixed(3);
-    return `<tr>
-      <td>${pair[1]}</td>
-      <td>${escapeHtml(top.models[name])} t/ha</td>
-      <td>${weight}</td>
+  const metric = metrics.RandomForest || {};
+  const testMae = metric.MAE === undefined ? "--" : Number(metric.MAE).toFixed(3);
+  const modelRows = `<tr>
+      <td>Random Forest</td>
+      <td>${escapeHtml(top.models.RandomForest)} t/ha</td>
       <td>${testMae} t/ha</td>
     </tr>`;
-  }).join("");
 
   box.innerHTML = `
     <div class="crop-results-head">
@@ -403,7 +345,6 @@ function renderCropRecommendation(data) {
     </div>
 
     <div class="crop-pill-row">
-      <span class="crop-agreement-pill ${agreementClass}">${escapeHtml(agreementText)}</span>
       <span class="crop-hint">${translate("cropRankHint", "Ranked by suitability, never by raw yield across crops.")}</span>
     </div>
 
@@ -438,17 +379,9 @@ function renderCropRecommendation(data) {
         <thead><tr>
           <th>${translate("cropModel", "Model")}</th>
           <th>${translate("cropPrediction", "Prediction")}</th>
-          <th>${translate("cropWeight", "Weight")}</th>
           <th>${translate("cropTestMae", "Test MAE")}</th>
         </tr></thead>
-        <tbody>${modelRows}
-          <tr class="crop-ensemble-row">
-            <td>${translate("cropEnsemble", "Ensemble")}</td>
-            <td>${escapeHtml(top.models.Ensemble)} t/ha</td>
-            <td>${translate("cropUsedForRanking", "Used for ranking")}</td>
-            <td>${escapeHtml((metrics.Ensemble && Number(metrics.Ensemble.MAE).toFixed(3)) || "--")} t/ha</td>
-          </tr>
-        </tbody>
+        <tbody>${modelRows}</tbody>
       </table>
       <p class="crop-note">${translate("cropModelNote", "Test metrics come from held-out years 2010–2011, the most recent in the dataset.")}</p>
     </details>
@@ -463,7 +396,6 @@ document.getElementById("telemedicineForm").addEventListener("submit", async fun
 
   const requestData = {
     symptoms: document.getElementById("symptoms").value,
-    language: currentLang,
   };
 
   const result = await safeFetch(`${API_URL}/telemedicine`, {
@@ -479,7 +411,7 @@ document.getElementById("telemedicineForm").addEventListener("submit", async fun
 
   const data = result.data;
   const style = data.urgent ? "urgent" : (data.condition === "Unrecognised symptoms" ? "warning" : "success");
-  const disclaimer = translations[currentLang].teleDisclaimer;
+  const disclaimer = translations.en.teleDisclaimer;
 
   showResult(
     "telemedicineResult",
@@ -523,44 +455,6 @@ document.getElementById("schemesForm").addEventListener("submit", async function
     listHtml += "</ul>";
     showResult("schemesResult", listHtml, "success");
   }
-});
-
-
-// ================= SMART WATER MANAGEMENT =================
-
-document.getElementById("waterForm").addEventListener("submit", async function (event) {
-  event.preventDefault();
-
-  const requestData = { city: document.getElementById("waterCity").value };
-
-  const result = await safeFetch(`${API_URL}/water`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestData),
-  });
-
-  if (!result.ok) {
-    showResult("waterResult", result.errorMessage, "error");
-    return;
-  }
-
-  const data = result.data;
-  if (!data.success) {
-    showResult("waterResult", data.message, "error");
-    return;
-  }
-
-  const style = (data.water_status === "Critical" || data.moisture_status === "Low") ? "warning" : "success";
-
-  showResult(
-    "waterResult",
-    `<div class="result-row"><span>Location</span><span>${data.location_name}</span></div>
-     <div class="result-row"><span>Soil Moisture</span><span>${data.soil_moisture_percent}% (${data.moisture_status})</span></div>
-     <div class="result-row"><span>3-Day Water Balance</span><span>${data.water_balance_mm}mm (${data.water_status})</span></div>
-     <p>${data.moisture_advice}</p>
-     <p>${data.water_advice}</p>`,
-    style
-  );
 });
 
 
@@ -689,12 +583,12 @@ document.getElementById("forgotPasswordForm").addEventListener("submit", async f
     return;
   }
 
-  showResult("workerAuthResult", translations[currentLang].resetEmailSent, "success");
+  showResult("workerAuthResult", translations.en.resetEmailSent, "success");
 });
 
 document.getElementById("resetPasswordForm").addEventListener("submit", async function (event) {
   event.preventDefault();
-  const text = translations[currentLang];
+  const text = translations.en;
 
   const newPassword = document.getElementById("resetNewPassword").value;
   const confirmPassword = document.getElementById("resetConfirmPassword").value;
@@ -738,7 +632,7 @@ function handlePasswordRecoveryLink() {
     showTab("employment");
     showEmploymentView("workerAuthBox");
     showAuthForm("forgotPasswordForm");
-    showResult("workerAuthResult", translations[currentLang].resetLinkExpired, "error");
+    showResult("workerAuthResult", translations.en.resetLinkExpired, "error");
     return true;
   }
 
@@ -992,7 +886,7 @@ async function loadAdminDashboard() {
   const activityResult = await safeFetch(`${API_URL}/admin/activity`, { headers });
   const activityLabels = {
     crop_prediction: "Crop Recommendations", telemedicine_query: "Telemedicine Queries",
-    scheme_check: "Scheme Checks", water_check: "Water Checks",
+    scheme_check: "Scheme Checks",
     disaster_check: "Disaster Checks", chat_message: "Chat Messages",
   };
   const activityBar = document.getElementById("adminActivityBar");

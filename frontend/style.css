@@ -14,7 +14,6 @@
   --crop-color: #2d9d6a;
   --tele-color: #e04f66;
   --schemes-color: #3f7fd0;
-  --water-color: #0891c4;
   --disaster-color: #ee8722;
   --employment-color: #8a4fc4;
 
@@ -72,21 +71,6 @@ header h1 {
   font-size: 26px;
   letter-spacing: 0.2px;
 }
-
-#langSwitch {
-  padding: 8px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font-size: 13px;
-  font-family: var(--font-body);
-  cursor: pointer;
-  width: auto;
-  margin: 0;
-}
-
-#langSwitch option { color: #1c2420; }
 
 /* ---------- Navigation - pill-style tabs ---------- */
 
@@ -265,9 +249,8 @@ h2 {
 .card-grid .card:nth-child(1) { --card-color: var(--crop-color); }
 .card-grid .card:nth-child(2) { --card-color: var(--tele-color); }
 .card-grid .card:nth-child(3) { --card-color: var(--schemes-color); }
-.card-grid .card:nth-child(4) { --card-color: var(--water-color); }
-.card-grid .card:nth-child(5) { --card-color: var(--disaster-color); }
-.card-grid .card:nth-child(6) { --card-color: var(--employment-color); }
+.card-grid .card:nth-child(4) { --card-color: var(--disaster-color); }
+.card-grid .card:nth-child(5) { --card-color: var(--employment-color); }
 
 .card-icon-badge {
   width: 58px;
@@ -283,7 +266,6 @@ h2 {
 .badge-crop       { background: rgba(45, 157, 106, 0.14); }
 .badge-tele       { background: rgba(224, 79, 102, 0.14); }
 .badge-schemes    { background: rgba(63, 127, 208, 0.14); }
-.badge-water      { background: rgba(8, 145, 196, 0.14); }
 .badge-disaster   { background: rgba(238, 135, 34, 0.16); }
 .badge-employment { background: rgba(138, 79, 196, 0.14); }
 
@@ -373,7 +355,6 @@ button:active { transform: translateY(0); }
 #crop button[type="submit"]       { background: linear-gradient(135deg, var(--crop-color), #1f7a52); }
 #telemedicine button[type="submit"] { background: linear-gradient(135deg, var(--tele-color), #b83a50); }
 #schemes button[type="submit"]    { background: linear-gradient(135deg, var(--schemes-color), #2f63ab); }
-#water button[type="submit"]      { background: linear-gradient(135deg, var(--water-color), #066f99); }
 #disaster button[type="submit"]   { background: linear-gradient(135deg, var(--disaster-color), #c46a14); }
 #employment button[type="submit"]:not(.btn-secondary):not(.btn-danger) {
   background: linear-gradient(135deg, var(--employment-color), #6a3a9c);
@@ -924,17 +905,6 @@ html[dir="rtl"] .suggestion-item { text-align: right; }
   margin-top: 12px;
 }
 .crop-hint { font-size: 12.5px; color: #6f6558; }
-.crop-agreement-pill {
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  background: #eee;
-  color: #555;
-}
-.crop-agreement-pill.high { background: #e6f7ee; color: #1f7a52; }
-.crop-agreement-pill.medium { background: #fff6e0; color: #9a6b00; }
-.crop-agreement-pill.low { background: #fdecea; color: #b03a2e; }
 
 .crop-subheading {
   margin: 24px 0 10px;
@@ -973,10 +943,6 @@ html[dir="rtl"] .suggestion-item { text-align: right; }
   font-size: 12.5px;
   color: #5d6f65;
 }
-.crop-agreement { font-weight: 700; }
-.crop-agreement.high { color: #1f7a52; }
-.crop-agreement.medium { color: #9a6b00; }
-.crop-agreement.low { color: #b03a2e; }
 
 .crop-reasons { display: flex; flex-direction: column; gap: 8px; }
 .crop-reason {
@@ -1064,9 +1030,6 @@ html[dir="rtl"] .suggestion-item { text-align: right; }
   text-align: left;
   border-bottom: 1px solid var(--border);
 }
-html[dir="rtl"] .crop-model-details th,
-html[dir="rtl"] .crop-model-details td { text-align: right; }
-.crop-ensemble-row { background: #eef8f2; font-weight: 600; }
 .crop-muted { color: #6f6558; font-size: 13px; }
 .crop-loading { text-align: center; color: var(--green-mid); font-weight: 600; }
 
